@@ -513,24 +513,64 @@ class HealthManager: ObservableObject {
             }?.value ?? []
 
             var totalSleep: Double = 0
+            var awakeDuration: Double = 0
+            var deepDuration: Double = 0
+            var remDuration: Double = 0
+            var lightDuration: Double = 0
+            var awakenings: Int = 0
             var sleepStageDurations: [String: Double] = [:]
             var sleepStages: [SleepStage] = []
-
+            
             for sample in selectedSamples {
                 let duration = sample.endDate.timeIntervalSince(sample.startDate) / 3600.0
                 let stageValue = HKCategoryValueSleepAnalysis(rawValue: sample.value)
                 let stage = self.stageDescription(for: sample.value)
-
-                if let stageValue = stageValue, stageValue != .awake && stageValue != .inBed {
-                    totalSleep += duration
+                
+                if let stageValue = stageValue {
+                    switch stageValue {
+                    case .awake:
+                        awakeDuration += duration
+                        if let last = sleepStages.last, last.stage != "Awake" {
+                            awakenings += 1
+                        }
+                    case .asleepDeep:
+                        deepDuration += duration
+                        totalSleep += duration
+                    case .asleepREM:
+                        remDuration += duration
+                        totalSleep += duration
+                    case .asleepCore, .asleepUnspecified:
+                        lightDuration += duration
+                        totalSleep += duration
+                    default:
+                        break
+                    }
                 }
-
+                
                 sleepStageDurations[stage, default: 0.0] += duration
                 sleepStages.append(SleepStage(stage: stage, startDate: sample.startDate, endDate: sample.endDate))
             }
-
-            let quality = totalSleep >= 7 ? "Good" : (totalSleep >= 5 ? "Fair" : "Poor")
-            let qualityScore = min(Int((totalSleep / 8.0) * 100), 100)
+            
+            let totalTime = totalSleep + awakeDuration
+            let durationScore = min(totalSleep / 8.0, 1.0) * 40.0
+            let awakeScore = max(0.0, 1.0 - (awakeDuration / max(totalTime, 1))) * 20.0
+            let awakeningScore = max(0.0, 1.0 - (Double(awakenings) / 10.0)) * 20.0
+            let deepScore = min(deepDuration / 1.5, 1.0) * 10.0
+            let totalStageSleep = max(deepDuration + remDuration + lightDuration, 1.0)
+            let idealDist = (deep: 0.25, rem: 0.25, light: 0.5)
+            let diff = abs(idealDist.deep - deepDuration / totalStageSleep) +
+                       abs(idealDist.rem - remDuration / totalStageSleep) +
+                       abs(idealDist.light - lightDuration / totalStageSleep)
+            let balanceScore = max(0.0, 1.0 - diff) * 10.0
+            let qualityScore = Int(durationScore + awakeScore + awakeningScore + deepScore + balanceScore)
+            let quality: String
+            if qualityScore >= 80 {
+                quality = "Good"
+            } else if qualityScore >= 60 {
+                quality = "Fair"
+            } else {
+                quality = "Poor"
+            }
 
             DispatchQueue.main.async {
                 self.sleepDuration = totalSleep
