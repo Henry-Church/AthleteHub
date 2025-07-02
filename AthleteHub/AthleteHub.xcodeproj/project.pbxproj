@@ -1,0 +1,659 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		856F430D2E113ED5008125D2 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 856F430C2E113ED5008125D2 /* FirebaseAnalytics */; };
+		856F430F2E113ED5008125D2 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 856F430E2E113ED5008125D2 /* FirebaseAuth */; };
+		856F43112E113ED5008125D2 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 856F43102E113ED5008125D2 /* FirebaseDatabase */; };
+		856F43132E113ED5008125D2 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 856F43122E113ED5008125D2 /* FirebaseFirestore */; };
+		856F43162E113F30008125D2 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 856F43152E113F30008125D2 /* GoogleSignIn */; };
+		856F43182E113F30008125D2 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 856F43172E113F30008125D2 /* GoogleSignInSwift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		856F42CF2E113E34008125D2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 856F42B92E113E31008125D2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 856F42C02E113E31008125D2;
+			remoteInfo = AthleteHub;
+		};
+		856F42D92E113E34008125D2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 856F42B92E113E31008125D2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 856F42C02E113E31008125D2;
+			remoteInfo = AthleteHub;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		856F42C12E113E31008125D2 /* AthleteHub.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AthleteHub.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		856F42CE2E113E34008125D2 /* AthleteHubTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AthleteHubTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		856F42D82E113E34008125D2 /* AthleteHubUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AthleteHubUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		856F43322E114A9A008125D2 /* Exceptions for "AthleteHub" folder in "AthleteHub" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 856F42C02E113E31008125D2 /* AthleteHub */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		856F42C32E113E31008125D2 /* AthleteHub */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				856F43322E114A9A008125D2 /* Exceptions for "AthleteHub" folder in "AthleteHub" target */,
+			);
+			path = AthleteHub;
+			sourceTree = "<group>";
+		};
+		856F42D12E113E34008125D2 /* AthleteHubTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = AthleteHubTests;
+			sourceTree = "<group>";
+		};
+		856F42DB2E113E34008125D2 /* AthleteHubUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = AthleteHubUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		856F42BE2E113E31008125D2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				856F43162E113F30008125D2 /* GoogleSignIn in Frameworks */,
+				856F43112E113ED5008125D2 /* FirebaseDatabase in Frameworks */,
+				856F43132E113ED5008125D2 /* FirebaseFirestore in Frameworks */,
+				856F43182E113F30008125D2 /* GoogleSignInSwift in Frameworks */,
+				856F430D2E113ED5008125D2 /* FirebaseAnalytics in Frameworks */,
+				856F430F2E113ED5008125D2 /* FirebaseAuth in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		856F42CB2E113E34008125D2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		856F42D52E113E34008125D2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		856F42B82E113E31008125D2 = {
+			isa = PBXGroup;
+			children = (
+				856F42C32E113E31008125D2 /* AthleteHub */,
+				856F42D12E113E34008125D2 /* AthleteHubTests */,
+				856F42DB2E113E34008125D2 /* AthleteHubUITests */,
+				856F42C22E113E31008125D2 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		856F42C22E113E31008125D2 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				856F42C12E113E31008125D2 /* AthleteHub.app */,
+				856F42CE2E113E34008125D2 /* AthleteHubTests.xctest */,
+				856F42D82E113E34008125D2 /* AthleteHubUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		856F42C02E113E31008125D2 /* AthleteHub */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 856F42E22E113E34008125D2 /* Build configuration list for PBXNativeTarget "AthleteHub" */;
+			buildPhases = (
+				856F42BD2E113E31008125D2 /* Sources */,
+				856F42BE2E113E31008125D2 /* Frameworks */,
+				856F42BF2E113E31008125D2 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				856F42C32E113E31008125D2 /* AthleteHub */,
+			);
+			name = AthleteHub;
+			packageProductDependencies = (
+				856F430C2E113ED5008125D2 /* FirebaseAnalytics */,
+				856F430E2E113ED5008125D2 /* FirebaseAuth */,
+				856F43102E113ED5008125D2 /* FirebaseDatabase */,
+				856F43122E113ED5008125D2 /* FirebaseFirestore */,
+				856F43152E113F30008125D2 /* GoogleSignIn */,
+				856F43172E113F30008125D2 /* GoogleSignInSwift */,
+			);
+			productName = AthleteHub;
+			productReference = 856F42C12E113E31008125D2 /* AthleteHub.app */;
+			productType = "com.apple.product-type.application";
+		};
+		856F42CD2E113E34008125D2 /* AthleteHubTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 856F42E52E113E34008125D2 /* Build configuration list for PBXNativeTarget "AthleteHubTests" */;
+			buildPhases = (
+				856F42CA2E113E34008125D2 /* Sources */,
+				856F42CB2E113E34008125D2 /* Frameworks */,
+				856F42CC2E113E34008125D2 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				856F42D02E113E34008125D2 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				856F42D12E113E34008125D2 /* AthleteHubTests */,
+			);
+			name = AthleteHubTests;
+			packageProductDependencies = (
+			);
+			productName = AthleteHubTests;
+			productReference = 856F42CE2E113E34008125D2 /* AthleteHubTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		856F42D72E113E34008125D2 /* AthleteHubUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 856F42E82E113E34008125D2 /* Build configuration list for PBXNativeTarget "AthleteHubUITests" */;
+			buildPhases = (
+				856F42D42E113E34008125D2 /* Sources */,
+				856F42D52E113E34008125D2 /* Frameworks */,
+				856F42D62E113E34008125D2 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				856F42DA2E113E34008125D2 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				856F42DB2E113E34008125D2 /* AthleteHubUITests */,
+			);
+			name = AthleteHubUITests;
+			packageProductDependencies = (
+			);
+			productName = AthleteHubUITests;
+			productReference = 856F42D82E113E34008125D2 /* AthleteHubUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		856F42B92E113E31008125D2 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1640;
+				LastUpgradeCheck = 1640;
+				TargetAttributes = {
+					856F42C02E113E31008125D2 = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					856F42CD2E113E34008125D2 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 856F42C02E113E31008125D2;
+					};
+					856F42D72E113E34008125D2 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 856F42C02E113E31008125D2;
+					};
+				};
+			};
+			buildConfigurationList = 856F42BC2E113E31008125D2 /* Build configuration list for PBXProject "AthleteHub" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 856F42B82E113E31008125D2;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				856F430B2E113ED5008125D2 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				856F43142E113F30008125D2 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 856F42C22E113E31008125D2 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				856F42C02E113E31008125D2 /* AthleteHub */,
+				856F42CD2E113E34008125D2 /* AthleteHubTests */,
+				856F42D72E113E34008125D2 /* AthleteHubUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		856F42BF2E113E31008125D2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		856F42CC2E113E34008125D2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		856F42D62E113E34008125D2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		856F42BD2E113E31008125D2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		856F42CA2E113E34008125D2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		856F42D42E113E34008125D2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		856F42D02E113E34008125D2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 856F42C02E113E31008125D2 /* AthleteHub */;
+			targetProxy = 856F42CF2E113E34008125D2 /* PBXContainerItemProxy */;
+		};
+		856F42DA2E113E34008125D2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 856F42C02E113E31008125D2 /* AthleteHub */;
+			targetProxy = 856F42D92E113E34008125D2 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		856F42E02E113E34008125D2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = STSMJ9F5VP;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		856F42E12E113E34008125D2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = STSMJ9F5VP;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		856F42E32E113E34008125D2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CODE_SIGN_ENTITLEMENTS = AthleteHub/AthleteHub.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = STSMJ9F5VP;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "$(SRCROOT)/Athletehub/Info.plist";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Church.AthleteHub;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		856F42E42E113E34008125D2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CODE_SIGN_ENTITLEMENTS = AthleteHub/AthleteHub.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = STSMJ9F5VP;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "$(SRCROOT)/Athletehub/Info.plist";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Church.AthleteHub;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		856F42E62E113E34008125D2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = STSMJ9F5VP;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Church.AthleteHubTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AthleteHub.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/AthleteHub";
+			};
+			name = Debug;
+		};
+		856F42E72E113E34008125D2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = STSMJ9F5VP;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Church.AthleteHubTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AthleteHub.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/AthleteHub";
+			};
+			name = Release;
+		};
+		856F42E92E113E34008125D2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = STSMJ9F5VP;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Church.AthleteHubUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = AthleteHub;
+			};
+			name = Debug;
+		};
+		856F42EA2E113E34008125D2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = STSMJ9F5VP;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Church.AthleteHubUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = AthleteHub;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		856F42BC2E113E31008125D2 /* Build configuration list for PBXProject "AthleteHub" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				856F42E02E113E34008125D2 /* Debug */,
+				856F42E12E113E34008125D2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		856F42E22E113E34008125D2 /* Build configuration list for PBXNativeTarget "AthleteHub" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				856F42E32E113E34008125D2 /* Debug */,
+				856F42E42E113E34008125D2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		856F42E52E113E34008125D2 /* Build configuration list for PBXNativeTarget "AthleteHubTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				856F42E62E113E34008125D2 /* Debug */,
+				856F42E72E113E34008125D2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		856F42E82E113E34008125D2 /* Build configuration list for PBXNativeTarget "AthleteHubUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				856F42E92E113E34008125D2 /* Debug */,
+				856F42EA2E113E34008125D2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		856F430B2E113ED5008125D2 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.15.0;
+			};
+		};
+		856F43142E113F30008125D2 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		856F430C2E113ED5008125D2 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 856F430B2E113ED5008125D2 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		856F430E2E113ED5008125D2 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 856F430B2E113ED5008125D2 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		856F43102E113ED5008125D2 /* FirebaseDatabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 856F430B2E113ED5008125D2 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseDatabase;
+		};
+		856F43122E113ED5008125D2 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 856F430B2E113ED5008125D2 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		856F43152E113F30008125D2 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 856F43142E113F30008125D2 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		856F43172E113F30008125D2 /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 856F43142E113F30008125D2 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 856F42B92E113E31008125D2 /* Project object */;
+}
