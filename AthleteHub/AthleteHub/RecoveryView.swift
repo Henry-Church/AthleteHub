@@ -1,5 +1,6 @@
 import SwiftUI
 import HealthKit
+import Charts
 
 struct OverallRecoveryScoreCard: View {
     let score: Int
@@ -100,20 +101,8 @@ struct RecoveryView: View {
                 )
             ),
             AnyView(
-                RecoveryMetricCard(
-                    title: "HRV",
-                    actual: healthManager.hrv ?? 0,
-                    goal: nil,
-                    unit: "ms",
-                    colorScheme: colorScheme
-                )
-            ),
-            AnyView(
-                RecoveryMetricCard(
-                    title: "Recovery Score",
-                    actual: healthManager.recoveryScore ?? 0,
-                    goal: 100,
-                    unit: "/100",
+                HRVChartCard(
+                    values: healthManager.hrvWeek,
                     colorScheme: colorScheme
                 )
                 .gridCellColumns(2)
@@ -221,7 +210,7 @@ private var cardBackground: Color {
     }
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Label(title, systemImage: "bed.double.fill")
                     .font(.headline)
@@ -243,6 +232,7 @@ private var cardBackground: Color {
                 .cornerRadius(4)
             }
             .frame(height: 8)
+            Spacer()
         }
         .padding()
         .frame(maxWidth: .infinity)
@@ -461,6 +451,46 @@ struct SleepQualityCard: View {
                 animatedProgress = progress
             }
         }
+    }
+}
+
+struct HRVChartCard: View {
+    let values: [Double]
+    let colorScheme: ColorScheme
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("HRV Avg (7d)")
+                .font(.headline)
+
+            if #available(iOS 16.0, *) {
+                Chart {
+                    ForEach(values.indices, id: \.self) { i in
+                        LineMark(
+                            x: .value("Day", i),
+                            y: .value("HRV", values[i])
+                        )
+                        PointMark(
+                            x: .value("Day", i),
+                            y: .value("HRV", values[i])
+                        )
+                    }
+                }
+                .chartYScale(domain: 0...(values.max() ?? 1))
+                .frame(height: 120)
+            } else {
+                Text("Available on iOS 16+")
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer()
+        }
+        .padding()
+        .frame(maxWidth: .infinity)
+        .frame(height: 180)
+        .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
+        .cornerRadius(16)
+        .shadow(color: Color.purple.opacity(0.15), radius: 8, x: 0, y: 4)
     }
 }
 
