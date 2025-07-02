@@ -159,12 +159,6 @@ struct RecoveryView: View {
                 }
                 .padding(.horizontal)
 
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                    ForEach(Array(recoveryCards.enumerated()), id: \.offset) { _, view in
-                        view
-                    }
-                }
-
                 RecoveryChartCard(title: "Sleep Stage Timeline", colorScheme: colorScheme) {
                     if !healthManager.sleepStages.isEmpty {
                         SleepStageHypnogramView(
@@ -179,6 +173,12 @@ struct RecoveryView: View {
                             .frame(maxWidth: .infinity)
                             .background(Color(.secondarySystemBackground))
                             .cornerRadius(12)
+                    }
+                }
+
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                    ForEach(Array(recoveryCards.enumerated()), id: \.offset) { _, view in
+                        view
                     }
                 }
             }
