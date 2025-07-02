@@ -201,12 +201,14 @@ struct RecoveryView: View {
 }
 
 struct RecoverySleepDurationCard: View {
-    @EnvironmentObject var healthManager: HealthManager
-    
     let title: String
     let value: String
     let stages: [SleepStage]
     let colorScheme: ColorScheme
+
+    private var totalDuration: Double {
+        stages.reduce(0) { $0 + $1.endDate.timeIntervalSince($1.startDate) }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -220,13 +222,10 @@ struct RecoverySleepDurationCard: View {
 
             GeometryReader { geometry in
                 HStack(spacing: 0) {
-                    ForEach(healthManager.sleepStages, id: \.startDate) { stage in
-                        VStack(alignment: .leading) {
-                            Text(String(describing: stage.stage))
-                            Text("\(stage.startDate.formatted(date: .omitted, time: .shortened)) - \(stage.endDate.formatted(date: .omitted, time: .shortened))")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
+                    ForEach(stages.sorted(by: { $0.startDate < $1.startDate })) { stage in
+                        Rectangle()
+                            .fill(stageColor(for: stage.stage))
+                            .frame(width: barWidth(for: stage, totalWidth: geometry.size.width), height: 8)
                     }
                 }
                 .cornerRadius(4)
@@ -238,6 +237,27 @@ struct RecoverySleepDurationCard: View {
         .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
         .cornerRadius(16)
         .shadow(color: Color.purple.opacity(0.15), radius: 8, x: 0, y: 4)
+    }
+
+    private func barWidth(for stage: SleepStage, totalWidth: CGFloat) -> CGFloat {
+        guard totalDuration > 0 else { return 0 }
+        let duration = stage.endDate.timeIntervalSince(stage.startDate)
+        return CGFloat(duration / totalDuration) * totalWidth
+    }
+
+    private func stageColor(for stage: String) -> Color {
+        switch stage {
+        case "Awake":
+            return Color.pink.opacity(0.4)
+        case "REM Sleep":
+            return Color.purple
+        case "Light Sleep":
+            return Color.blue.opacity(0.5)
+        case "Deep Sleep":
+            return Color.blue
+        default:
+            return Color.gray
+        }
     }
 }
 

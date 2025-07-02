@@ -466,6 +466,7 @@ class HealthManager: ObservableObject {
             var totalSleep: Double = 0
             var sleepStageDurations: [String: Double] = [:]
             var sleepStages: [SleepStage] = []
+            var rawSamples: [HKCategorySample] = []
 
             for sample in samples {
                 let duration = sample.endDate.timeIntervalSince(sample.startDate) / 3600.0
@@ -477,6 +478,7 @@ class HealthManager: ObservableObject {
 
                 sleepStageDurations[stage, default: 0.0] += duration
                 sleepStages.append(SleepStage(stage: stage, startDate: sample.startDate, endDate: sample.endDate))
+                rawSamples.append(sample)
             }
 
             let quality = totalSleep >= 7 ? "Good" : (totalSleep >= 5 ? "Fair" : "Poor")
@@ -485,6 +487,7 @@ class HealthManager: ObservableObject {
                 self.sleepDuration = totalSleep
                 self.sleepQuality = quality
                 self.sleepStages = sleepStages
+                self.rawSleepSamples = rawSamples
 
                 // ✅ Upload to Firebase
                 self.uploadSleepToFirebase(duration: totalSleep, quality: quality, stages: sleepStageDurations)
