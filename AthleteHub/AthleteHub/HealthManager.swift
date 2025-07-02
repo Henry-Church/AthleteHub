@@ -470,9 +470,10 @@ class HealthManager: ObservableObject {
 
             for sample in samples {
                 let duration = sample.endDate.timeIntervalSince(sample.startDate) / 3600.0
+                let stageValue = HKCategoryValueSleepAnalysis(rawValue: sample.value)
                 let stage = self.stageDescription(for: sample.value)
 
-                if sample.value != HKCategoryValueSleepAnalysis.awake.rawValue {
+                if let stageValue = stageValue, stageValue != .awake && stageValue != .inBed {
                     totalSleep += duration
                 }
 
@@ -482,10 +483,12 @@ class HealthManager: ObservableObject {
             }
 
             let quality = totalSleep >= 7 ? "Good" : (totalSleep >= 5 ? "Fair" : "Poor")
+            let qualityScore = min(Int((totalSleep / 8.0) * 100), 100)
 
             DispatchQueue.main.async {
                 self.sleepDuration = totalSleep
                 self.sleepQuality = quality
+                self.sleepQualityScore = qualityScore
                 self.sleepStages = sleepStages
                 self.rawSleepSamples = rawSamples
 
