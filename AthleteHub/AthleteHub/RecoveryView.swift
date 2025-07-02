@@ -1,6 +1,5 @@
 import SwiftUI
 import HealthKit
-import Charts
 
 struct OverallRecoveryScoreCard: View {
     let score: Int
@@ -208,22 +207,6 @@ struct RecoverySleepDurationCard: View {
     let value: String
     let stages: [SleepStage]
     let colorScheme: ColorScheme
-
-    
-    private var stageColors: [String: Color] {
-        [
-            "Awake": Color.pink.opacity(0.5),
-            "REM Sleep": Color.purple,
-            "Light Sleep": Color.blue.opacity(0.4),
-            "Deep Sleep": Color.blue,
-            "Unknown": Color.gray
-        ]
-    }
-
-
-    private var totalDuration: Double {
-        stages.map { $0.duration }.reduce(0, +)
-    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -510,52 +493,6 @@ struct ManualRecoveryEntryView: View {
     }
 }
 
-
-struct SleepPhaseChartView: View {
-    let sleepPhases: [HKCategorySample]
-    let colorScheme: ColorScheme
-
-    var body: some View {
-        GeometryReader { geometry in
-            let totalWidth = geometry.size.width
-
-            guard let firstStart = sleepPhases.first?.startDate,
-                  let lastEnd = sleepPhases.last?.endDate else {
-                return AnyView(EmptyView())
-            }
-
-            let totalSeconds = lastEnd.timeIntervalSince(firstStart)
-
-            return AnyView(
-                ZStack(alignment: .leading) {
-                    ForEach(sleepPhases.indices, id: \.self) { i in
-                        let sample = sleepPhases[i]
-                        let startOffset = CGFloat(sample.startDate.timeIntervalSince(firstStart) / totalSeconds) * totalWidth
-                        let width = CGFloat(sample.endDate.timeIntervalSince(sample.startDate) / totalSeconds) * totalWidth
-
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(stageColor(for: sample.value))
-                            .frame(width: width, height: 8)
-                            .offset(x: startOffset)
-                    }
-                }
-            )
-        }
-        .frame(height: 8)
-        .background(Color(.systemGray5))
-        .cornerRadius(8)
-    }
-
-    private func stageColor(for value: Int) -> Color {
-        switch HKCategoryValueSleepAnalysis(rawValue: value) {
-        case .awake: return Color.pink
-        case .asleepREM: return Color.purple
-        case .asleepCore: return Color.blue.opacity(0.4)
-        case .asleepDeep: return Color.blue
-        default: return Color.gray
-        }
-    }
-}
 
 
 struct SleepStageHypnogramView: View {
