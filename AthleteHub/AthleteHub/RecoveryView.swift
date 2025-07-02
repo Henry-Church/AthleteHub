@@ -165,7 +165,7 @@ struct RecoveryView: View {
                             sleepSamples: healthManager.rawSleepSamples,
                             colorScheme: colorScheme
                         )
-                        .frame(height: 120)
+                        .frame(height: 140)
                     } else {
                         Text("Data not available")
                             .foregroundColor(.secondary)
@@ -206,6 +206,10 @@ struct RecoverySleepDurationCard: View {
     let stages: [SleepStage]
     let colorScheme: ColorScheme
 
+    private var cardBackground: Color {
+        colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground)
+    }
+
     private let validStageNames = ["Awake", "REM Sleep", "Light Sleep", "Deep Sleep"]
 
     private var filteredStages: [SleepStage] {
@@ -217,10 +221,12 @@ struct RecoverySleepDurationCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(.semibold)
+        VStack(spacing: 16) {
+            HStack {
+                Label(title, systemImage: "bed.double.fill")
+                    .font(.headline)
+                Spacer()
+            }
 
             Text(value)
                 .font(.caption)
@@ -240,7 +246,8 @@ struct RecoverySleepDurationCard: View {
         }
         .padding()
         .frame(maxWidth: .infinity)
-        .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
+        .frame(height: 180)
+        .background(cardBackground)
         .cornerRadius(16)
         .shadow(color: Color.purple.opacity(0.15), radius: 8, x: 0, y: 4)
     }
@@ -285,10 +292,12 @@ struct RecoveryMetricCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(.semibold)
+        VStack(spacing: 16) {
+            HStack {
+                Text(title)
+                    .font(.headline)
+                Spacer()
+            }
 
             Text(goal != nil ?
                  "\(Int(actual)) / \(Int(goal!)) \(unit)" :
@@ -310,6 +319,7 @@ struct RecoveryMetricCard: View {
         }
         .padding()
         .frame(maxWidth: .infinity)
+        .frame(height: 180)
         .background(cardBackground)
         .cornerRadius(16)
         .shadow(color: Color.purple.opacity(0.15), radius: 8, x: 0, y: 4)
@@ -451,6 +461,7 @@ struct SleepQualityCard: View {
         }
         .padding()
         .frame(maxWidth: .infinity)
+        .frame(height: 180)
         .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
         .cornerRadius(16)
         .shadow(color: Color.purple.opacity(0.15), radius: 8, x: 0, y: 4)
