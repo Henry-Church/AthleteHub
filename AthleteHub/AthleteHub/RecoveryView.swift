@@ -1,5 +1,6 @@
 import SwiftUI
 import HealthKit
+import Charts
 
 struct OverallRecoveryScoreCard: View {
     let score: Int
@@ -78,7 +79,6 @@ struct RecoveryView: View {
             AnyView(
                 SleepQualityCard(
                     score: Int(healthManager.sleepQualityScore ?? 0),
-                    durationHours: healthManager.sleepDuration ?? 0.0,
                     colorScheme: colorScheme
                 )
             ),
@@ -101,22 +101,11 @@ struct RecoveryView: View {
                 )
             ),
             AnyView(
-                RecoveryMetricCard(
-                    title: "HRV",
-                    actual: healthManager.hrv ?? 0,
-                    goal: nil,
-                    unit: "ms",
+                HRVChartCard(
+                    values: healthManager.hrvWeek,
                     colorScheme: colorScheme
                 )
-            ),
-            AnyView(
-                RecoveryMetricCard(
-                    title: "Recovery Score",
-                    actual: healthManager.recoveryScore ?? 0,
-                    goal: 100,
-                    unit: "/100",
-                    colorScheme: colorScheme
-                )
+                .gridCellColumns(2)
             )
         ]
     }
@@ -181,6 +170,7 @@ struct RecoveryView: View {
                         view
                     }
                 }
+                .padding(.horizontal)
             }
             .padding(.vertical)
         }
@@ -220,7 +210,7 @@ private var cardBackground: Color {
     }
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Label(title, systemImage: "bed.double.fill")
                     .font(.headline)
@@ -242,6 +232,7 @@ private var cardBackground: Color {
                 .cornerRadius(4)
             }
             .frame(height: 8)
+            Spacer()
         }
         .padding()
         .frame(maxWidth: .infinity)
@@ -291,7 +282,7 @@ struct RecoveryMetricCard: View {
     }
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Text(title)
                     .font(.headline)
@@ -315,6 +306,7 @@ struct RecoveryMetricCard: View {
                     .fontWeight(.medium)
                     .foregroundColor(.purple)
             }
+            Spacer()
         }
         .padding()
         .frame(maxWidth: .infinity)
@@ -392,7 +384,6 @@ struct SetRecoveryGoalsView: View {
 
 struct SleepQualityCard: View {
     let score: Int              // 0 to 100 sleep score
-    let durationHours: Double   // total sleep duration in hours
     let colorScheme: ColorScheme
 
     @State private var animatedProgress: Double = 0.0
@@ -448,15 +439,6 @@ struct SleepQualityCard: View {
                 }
             }
 
-            HStack {
-                Image(systemName: "bed.double.fill")
-                    .foregroundColor(.purple)
-                Text(String(format: "%.1f hrs", durationHours))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                Spacer()
-            }
-
         }
         .padding()
         .frame(maxWidth: .infinity)
@@ -469,6 +451,46 @@ struct SleepQualityCard: View {
                 animatedProgress = progress
             }
         }
+    }
+}
+
+struct HRVChartCard: View {
+    let values: [Double]
+    let colorScheme: ColorScheme
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("HRV Avg (7d)")
+                .font(.headline)
+
+            if #available(iOS 16.0, *) {
+                Chart {
+                    ForEach(values.indices, id: \.self) { i in
+                        LineMark(
+                            x: .value("Day", i),
+                            y: .value("HRV", values[i])
+                        )
+                        PointMark(
+                            x: .value("Day", i),
+                            y: .value("HRV", values[i])
+                        )
+                    }
+                }
+                .chartYScale(domain: 0...(values.max() ?? 1))
+                .frame(height: 120)
+            } else {
+                Text("Available on iOS 16+")
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer()
+        }
+        .padding()
+        .frame(maxWidth: .infinity)
+        .frame(height: 180)
+        .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
+        .cornerRadius(16)
+        .shadow(color: Color.purple.opacity(0.15), radius: 8, x: 0, y: 4)
     }
 }
 
@@ -580,20 +602,25 @@ struct SleepStageHypnogramView: View {
                 return AnyView(EmptyView())
             }
 
-let totalSeconds = last.timeIntervalSince(first)
-let hourTicks = stride(from: 0.0, through: totalSeconds, by: 3600).map { $0 }
+            // Display up to 9 hours on the timeline starting at 0h
+            let chartHours: Double = 9
+            let totalSeconds = chartHours * 3600
+            let hourTicks = stride(from: 0.0, through: totalSeconds, by: 3600).map { $0 }
+
+            // Group the timeline entries by stage for easy drawing
+            let groupedByStage = Dictionary(grouping: timelineEntries, by: { $0.stage })
 
 return AnyView(
     ZStack(alignment: .topLeading) {
         // Sleep stage bars
         ForEach(stageOrder.indices, id: \.self) { index in
             let stage = stageOrder[index]
-            let samples = groupedByStage[stage] ?? []
+            let entries = groupedByStage[stage] ?? []
 
-            ForEach(samples.indices, id: \.self) { i in
-                let sample = samples[i]
-                let startOffset = CGFloat(sample.startDate.timeIntervalSince(first) / totalSeconds) * chartWidth
-                let width = CGFloat(sample.endDate.timeIntervalSince(sample.startDate) / totalSeconds) * chartWidth
+            ForEach(entries.indices, id: \.self) { i in
+                let entry = entries[i]
+                let startOffset = CGFloat(entry.start / totalSeconds) * chartWidth
+                let width = CGFloat(entry.duration / totalSeconds) * chartWidth
                 let yOffset = CGFloat(index) * rowHeight
 
                 RoundedRectangle(cornerRadius: 4)
@@ -621,35 +648,12 @@ return AnyView(
                 .foregroundColor(.secondary)
                 .offset(x: x - 10, y: chartHeight + 2)
         }
-    }
-)
-
-                    }
-
-                    // Stage labels
-                    ForEach(stageOrder.indices, id: \.self) { index in
-                        Text(stageName(for: stageOrder[index]))
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                            .frame(width: labelWidth - 4, alignment: .leading)
-                            .offset(x: 0, y: CGFloat(index) * rowHeight + rowHeight * 0.2)
-                    }
-
-                    // Time labels
-                    ForEach(hourTicks.indices, id: \.self) { i in
-                        let tick = hourTicks[i]
-                        let x = labelWidth + CGFloat(tick / totalSeconds) * chartWidth
-                        Text("\(Int(tick / 3600))h")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                            .offset(x: x - 10, y: chartHeight + 2)
-                    }
-                }
-            )
-        }
+    })
         .frame(height: 140)
         .background(Color(.systemGray6))
         .cornerRadius(12)
+    }
+
     }
 
     private func stageColor(for stage: HKCategoryValueSleepAnalysis) -> Color {
