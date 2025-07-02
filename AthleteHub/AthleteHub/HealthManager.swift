@@ -154,7 +154,15 @@ class HealthManager: ObservableObject {
             "vo2Max": vo2Max ?? 0,
             "bodyMass": bodyMass ?? 0,
             "height": height ?? 0,
-            "trainingScore": calculateOverallTrainingScore()
+            "trainingScore": calculateOverallTrainingScore(),
+            "weeklyDistance": weeklyDistance ?? 0,
+            "weeklyHours": weeklyHours ?? 0,
+            "sleepDuration": sleepDuration ?? 0,
+            "sleepQuality": sleepQuality,
+            "sleepQualityScore": sleepQualityScore ?? 0,
+            "stressLevel": stressLevel ?? 0,
+            "recoveryScore": recoveryScore ?? 0,
+            "hrvWeek": hrvWeek
         ]
 
         db.collection("users").document(userId)
