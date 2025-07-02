@@ -23,6 +23,12 @@ struct DashboardView: View {
         return 0
     }
 
+    private func progress(from percentage: String?) -> Double? {
+        guard let text = percentage?.replacingOccurrences(of: "%", with: ""),
+              let value = Double(text) else { return nil }
+        return min(value / 100.0, 1.0)
+    }
+
     var body: some View {
         GeometryReader { geometry in
             ScrollView {
@@ -50,11 +56,39 @@ struct DashboardView: View {
                             .font(.headline)
                             .padding(.horizontal)
 
-                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                            DashboardMetricCard(icon: "flame", value: userProfile.caloriesConsumed ?? "--", label: "Calories", sublabel: userProfile.caloriesStatus ?? "", colorScheme: colorScheme, cardBackground: cardBackground)
-                            DashboardMetricCard(icon: "drop.fill", value: userProfile.waterIntake ?? "--", label: "Water Intake", sublabel: userProfile.waterStatus ?? "", colorScheme: colorScheme, cardBackground: cardBackground)
-                            DashboardMetricCard(icon: "fork.knife", value: userProfile.proteinIntake ?? "--", label: "Protein", sublabel: userProfile.proteinStatus ?? "", colorScheme: colorScheme, cardBackground: cardBackground)
-                            DashboardMetricCard(icon: "leaf.fill", value: userProfile.carbsIntake ?? "--", label: "Carbs", sublabel: userProfile.carbsStatus ?? "", colorScheme: colorScheme, cardBackground: cardBackground)
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                            DashboardMetricCard(
+                                icon: "flame",
+                                value: userProfile.caloriesConsumed ?? "--",
+                                label: "Calories",
+                                sublabel: userProfile.caloriesStatus ?? "",
+                                progress: progress(from: userProfile.caloriesPercentage),
+                                colorScheme: colorScheme,
+                                cardBackground: cardBackground)
+                            DashboardMetricCard(
+                                icon: "drop.fill",
+                                value: userProfile.waterIntake ?? "--",
+                                label: "Water Intake",
+                                sublabel: userProfile.waterStatus ?? "",
+                                progress: progress(from: userProfile.waterPercentage),
+                                colorScheme: colorScheme,
+                                cardBackground: cardBackground)
+                            DashboardMetricCard(
+                                icon: "fork.knife",
+                                value: userProfile.proteinIntake ?? "--",
+                                label: "Protein",
+                                sublabel: userProfile.proteinStatus ?? "",
+                                progress: progress(from: userProfile.proteinPercentage),
+                                colorScheme: colorScheme,
+                                cardBackground: cardBackground)
+                            DashboardMetricCard(
+                                icon: "leaf.fill",
+                                value: userProfile.carbsIntake ?? "--",
+                                label: "Carbs",
+                                sublabel: userProfile.carbsStatus ?? "",
+                                progress: progress(from: userProfile.carbsPercentage),
+                                colorScheme: colorScheme,
+                                cardBackground: cardBackground)
                         }
                         .padding(.horizontal)
                     }
@@ -107,6 +141,7 @@ struct DashboardMetricCard: View {
     let value: String
     let label: String
     let sublabel: String
+    let progress: Double?
     let colorScheme: ColorScheme
     let cardBackground: Color
 
@@ -128,6 +163,17 @@ struct DashboardMetricCard: View {
                 Text(sublabel)
                     .font(.caption2)
                     .foregroundColor(.secondary)
+            }
+
+            if let progress = progress {
+                ProgressView(value: progress)
+                    .progressViewStyle(LinearProgressViewStyle(tint: .blue))
+                    .frame(height: 6)
+                    .padding(.top, 4)
+
+                Text(String(format: "%.0f%%", progress * 100))
+                    .font(.caption2)
+                    .foregroundColor(.blue)
             }
         }
         .padding()
