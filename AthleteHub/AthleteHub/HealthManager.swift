@@ -463,12 +463,22 @@ class HealthManager: ObservableObject {
                 return
             }
 
+            // Group samples by the day they ended and select the group with the
+            // longest total duration. This avoids showing multiple nights of
+            // data in the sleep timeline.
+            let calendar = Calendar.current
+            let grouped = Dictionary(grouping: samples) { calendar.startOfDay(for: $0.endDate) }
+            let selectedSamples = grouped.max { a, b in
+                let durA = a.value.reduce(0) { $0 + $1.endDate.timeIntervalSince($1.startDate) }
+                let durB = b.value.reduce(0) { $0 + $1.endDate.timeIntervalSince($1.startDate) }
+                return durA < durB
+            }?.value ?? []
+
             var totalSleep: Double = 0
             var sleepStageDurations: [String: Double] = [:]
             var sleepStages: [SleepStage] = []
-            var rawSamples: [HKCategorySample] = []
 
-            for sample in samples {
+            for sample in selectedSamples {
                 let duration = sample.endDate.timeIntervalSince(sample.startDate) / 3600.0
                 let stageValue = HKCategoryValueSleepAnalysis(rawValue: sample.value)
                 let stage = self.stageDescription(for: sample.value)
@@ -479,7 +489,6 @@ class HealthManager: ObservableObject {
 
                 sleepStageDurations[stage, default: 0.0] += duration
                 sleepStages.append(SleepStage(stage: stage, startDate: sample.startDate, endDate: sample.endDate))
-                rawSamples.append(sample)
             }
 
             let quality = totalSleep >= 7 ? "Good" : (totalSleep >= 5 ? "Fair" : "Poor")
@@ -490,7 +499,7 @@ class HealthManager: ObservableObject {
                 self.sleepQuality = quality
                 self.sleepQualityScore = qualityScore
                 self.sleepStages = sleepStages
-                self.rawSleepSamples = rawSamples
+                self.rawSleepSamples = selectedSamples
 
                 // ✅ Upload to Firebase
                 self.uploadSleepToFirebase(duration: totalSleep, quality: quality, stages: sleepStageDurations)
