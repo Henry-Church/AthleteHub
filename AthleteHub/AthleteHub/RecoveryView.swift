@@ -165,7 +165,7 @@ struct RecoveryView: View {
                             sleepSamples: healthManager.rawSleepSamples,
                             colorScheme: colorScheme
                         )
-                        .frame(height: 120)
+                        .frame(height: 140)
                     } else {
                         Text("Data not available")
                             .foregroundColor(.secondary)
@@ -206,15 +206,27 @@ struct RecoverySleepDurationCard: View {
     let stages: [SleepStage]
     let colorScheme: ColorScheme
 
+    private var cardBackground: Color {
+        colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground)
+    }
+
+    private let validStageNames = ["Awake", "REM Sleep", "Light Sleep", "Deep Sleep"]
+
+    private var filteredStages: [SleepStage] {
+        stages.filter { validStageNames.contains($0.stage) }
+    }
+
     private var totalDuration: Double {
-        stages.reduce(0) { $0 + $1.endDate.timeIntervalSince($1.startDate) }
+        filteredStages.reduce(0) { $0 + $1.endDate.timeIntervalSince($1.startDate) }
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(.semibold)
+        VStack(spacing: 16) {
+            HStack {
+                Label(title, systemImage: "bed.double.fill")
+                    .font(.headline)
+                Spacer()
+            }
 
             Text(value)
                 .font(.caption)
@@ -222,7 +234,7 @@ struct RecoverySleepDurationCard: View {
 
             GeometryReader { geometry in
                 HStack(spacing: 0) {
-                    ForEach(stages.sorted(by: { $0.startDate < $1.startDate })) { stage in
+                    ForEach(filteredStages.sorted(by: { $0.startDate < $1.startDate })) { stage in
                         Rectangle()
                             .fill(stageColor(for: stage.stage))
                             .frame(width: barWidth(for: stage, totalWidth: geometry.size.width), height: 8)
@@ -234,7 +246,8 @@ struct RecoverySleepDurationCard: View {
         }
         .padding()
         .frame(maxWidth: .infinity)
-        .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
+        .frame(height: 180)
+        .background(cardBackground)
         .cornerRadius(16)
         .shadow(color: Color.purple.opacity(0.15), radius: 8, x: 0, y: 4)
     }
@@ -279,10 +292,12 @@ struct RecoveryMetricCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(.semibold)
+        VStack(spacing: 16) {
+            HStack {
+                Text(title)
+                    .font(.headline)
+                Spacer()
+            }
 
             Text(goal != nil ?
                  "\(Int(actual)) / \(Int(goal!)) \(unit)" :
@@ -304,6 +319,7 @@ struct RecoveryMetricCard: View {
         }
         .padding()
         .frame(maxWidth: .infinity)
+        .frame(height: 180)
         .background(cardBackground)
         .cornerRadius(16)
         .shadow(color: Color.purple.opacity(0.15), radius: 8, x: 0, y: 4)
@@ -445,6 +461,7 @@ struct SleepQualityCard: View {
         }
         .padding()
         .frame(maxWidth: .infinity)
+        .frame(height: 180)
         .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
         .cornerRadius(16)
         .shadow(color: Color.purple.opacity(0.15), radius: 8, x: 0, y: 4)
@@ -526,52 +543,85 @@ struct SleepStageHypnogramView: View {
         .asleepDeep     // Blue
     ]
 
-    // Group valid samples by sleep stage (exclude any unknown values)
-    private var groupedByStage: [HKCategoryValueSleepAnalysis: [HKCategorySample]] {
-        let validSamples = sleepSamples.compactMap { sample -> (HKCategoryValueSleepAnalysis, HKCategorySample)? in
+    // Filter to only the sleep stages we display (ignore "in bed" and unknown values)
+    private var filteredSamples: [HKCategorySample] {
+        sleepSamples.compactMap { sample in
             guard let stage = HKCategoryValueSleepAnalysis(rawValue: sample.value) else { return nil }
-            return (stage, sample)
+            return stageOrder.contains(stage) ? sample : nil
         }
+    }
 
-        return Dictionary(grouping: validSamples, by: { $0.0 })
-            .mapValues { $0.map { $0.1 } }
+    // Pre-compute sequential offsets for each valid sample so the chart spans
+    // the exact total duration of shown stages instead of the entire query range
+    private var timelineEntries: [(stage: HKCategoryValueSleepAnalysis, start: TimeInterval, duration: TimeInterval)] {
+        var offset: TimeInterval = 0
+        var result: [(HKCategoryValueSleepAnalysis, TimeInterval, TimeInterval)] = []
+        for sample in filteredSamples.sorted(by: { $0.startDate < $1.startDate }) {
+            guard let stage = HKCategoryValueSleepAnalysis(rawValue: sample.value) else { continue }
+            let duration = sample.endDate.timeIntervalSince(sample.startDate)
+            result.append((stage, offset, duration))
+            offset += duration
+        }
+        return result
+    }
+
+    private var totalDuration: TimeInterval {
+        timelineEntries.reduce(0) { $0 + $1.duration }
     }
 
     var body: some View {
         GeometryReader { geometry in
-            let totalWidth = geometry.size.width
-            let totalHeight = geometry.size.height
-            let rowHeight = totalHeight / CGFloat(stageOrder.count)
+            let labelWidth: CGFloat = 48
+            let timeHeight: CGFloat = 16
+            let chartWidth = geometry.size.width - labelWidth
+            let chartHeight = geometry.size.height - timeHeight
+            let rowHeight = chartHeight / CGFloat(stageOrder.count)
 
-            guard let first = sleepSamples.first?.startDate,
-                  let last = sleepSamples.last?.endDate else {
+            guard totalDuration > 0 else {
                 return AnyView(EmptyView())
             }
 
-            let totalSeconds = last.timeIntervalSince(first)
+            let hourTicks = stride(from: 0.0, through: totalDuration, by: 3600).map { $0 }
 
             return AnyView(
                 ZStack(alignment: .topLeading) {
+                    // Sleep stage bars
+                    ForEach(timelineEntries.indices, id: \.self) { i in
+                        let entry = timelineEntries[i]
+                        let stage = entry.stage
+                        let startOffset = CGFloat(entry.start / totalDuration) * chartWidth
+                        let width = CGFloat(entry.duration / totalDuration) * chartWidth
+                        let rowIndex = stageOrder.firstIndex(of: stage) ?? 0
+                        let yOffset = CGFloat(rowIndex) * rowHeight
+
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(stageColor(for: stage))
+                            .frame(width: width, height: rowHeight * 0.6)
+                            .offset(x: labelWidth + startOffset, y: yOffset + rowHeight * 0.2)
+                    }
+
+                    // Stage labels
                     ForEach(stageOrder.indices, id: \.self) { index in
-                        let stage = stageOrder[index]
-                        let samples = groupedByStage[stage] ?? []
+                        Text(stageName(for: stageOrder[index]))
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                            .frame(width: labelWidth - 4, alignment: .leading)
+                            .offset(x: 0, y: CGFloat(index) * rowHeight + rowHeight * 0.2)
+                    }
 
-                        ForEach(samples.indices, id: \.self) { i in
-                            let sample = samples[i]
-                            let startOffset = CGFloat(sample.startDate.timeIntervalSince(first) / totalSeconds) * totalWidth
-                            let width = CGFloat(sample.endDate.timeIntervalSince(sample.startDate) / totalSeconds) * totalWidth
-                            let yOffset = CGFloat(index) * rowHeight
-
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(stageColor(for: stage))
-                                .frame(width: width, height: rowHeight * 0.6)
-                                .offset(x: startOffset, y: yOffset + rowHeight * 0.2)
-                        }
+                    // Time labels
+                    ForEach(hourTicks.indices, id: \.self) { i in
+                        let tick = hourTicks[i]
+                        let x = labelWidth + CGFloat(tick / totalDuration) * chartWidth
+                        Text("\(Int(tick / 3600))h")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                            .offset(x: x - 10, y: chartHeight + 2)
                     }
                 }
             )
         }
-        .frame(height: 120)
+        .frame(height: 140)
         .background(Color(.systemGray6))
         .cornerRadius(12)
     }
@@ -588,6 +638,16 @@ struct SleepStageHypnogramView: View {
             return Color.blue
         default:
             return Color.gray
+        }
+    }
+
+    private func stageName(for stage: HKCategoryValueSleepAnalysis) -> String {
+        switch stage {
+        case .awake: return "Awake"
+        case .asleepREM: return "REM"
+        case .asleepCore: return "Light"
+        case .asleepDeep: return "Deep"
+        default: return ""
         }
     }
 }

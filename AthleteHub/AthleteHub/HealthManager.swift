@@ -448,9 +448,9 @@ class HealthManager: ObservableObject {
             return
         }
 
-        let calendar = Calendar.current
-        let startOfYesterday = calendar.date(byAdding: .day, value: -1, to: calendar.startOfDay(for: Date()))!
-        let predicate = HKQuery.predicateForSamples(withStart: startOfYesterday, end: Date())
+        // Only fetch sleep for the last 24 hours to avoid displaying multiple nights
+        let startDate = Date().addingTimeInterval(-24 * 60 * 60)
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: Date())
 
         let query = HKSampleQuery(
             sampleType: type,
