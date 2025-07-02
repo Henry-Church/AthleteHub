@@ -206,10 +206,9 @@ struct RecoverySleepDurationCard: View {
     let stages: [SleepStage]
     let colorScheme: ColorScheme
 
-    private var cardBackground: Color {
-        colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground)
-    }
-
+private var cardBackground: Color {
+    colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground)
+}
     private let validStageNames = ["Awake", "REM Sleep", "Light Sleep", "Deep Sleep"]
 
     private var filteredStages: [SleepStage] {
@@ -581,23 +580,50 @@ struct SleepStageHypnogramView: View {
                 return AnyView(EmptyView())
             }
 
-            let hourTicks = stride(from: 0.0, through: totalDuration, by: 3600).map { $0 }
+let totalSeconds = last.timeIntervalSince(first)
+let hourTicks = stride(from: 0.0, through: totalSeconds, by: 3600).map { $0 }
 
-            return AnyView(
-                ZStack(alignment: .topLeading) {
-                    // Sleep stage bars
-                    ForEach(timelineEntries.indices, id: \.self) { i in
-                        let entry = timelineEntries[i]
-                        let stage = entry.stage
-                        let startOffset = CGFloat(entry.start / totalDuration) * chartWidth
-                        let width = CGFloat(entry.duration / totalDuration) * chartWidth
-                        let rowIndex = stageOrder.firstIndex(of: stage) ?? 0
-                        let yOffset = CGFloat(rowIndex) * rowHeight
+return AnyView(
+    ZStack(alignment: .topLeading) {
+        // Sleep stage bars
+        ForEach(stageOrder.indices, id: \.self) { index in
+            let stage = stageOrder[index]
+            let samples = groupedByStage[stage] ?? []
 
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(stageColor(for: stage))
-                            .frame(width: width, height: rowHeight * 0.6)
-                            .offset(x: labelWidth + startOffset, y: yOffset + rowHeight * 0.2)
+            ForEach(samples.indices, id: \.self) { i in
+                let sample = samples[i]
+                let startOffset = CGFloat(sample.startDate.timeIntervalSince(first) / totalSeconds) * chartWidth
+                let width = CGFloat(sample.endDate.timeIntervalSince(sample.startDate) / totalSeconds) * chartWidth
+                let yOffset = CGFloat(index) * rowHeight
+
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(stageColor(for: stage))
+                    .frame(width: width, height: rowHeight * 0.6)
+                    .offset(x: labelWidth + startOffset, y: yOffset + rowHeight * 0.2)
+            }
+        }
+
+        // Stage labels
+        ForEach(stageOrder.indices, id: \.self) { index in
+            Text(stageName(for: stageOrder[index]))
+                .font(.caption2)
+                .foregroundColor(.secondary)
+                .frame(width: labelWidth - 4, alignment: .leading)
+                .offset(x: 0, y: CGFloat(index) * rowHeight + rowHeight * 0.2)
+        }
+
+        // Time labels
+        ForEach(hourTicks.indices, id: \.self) { i in
+            let tick = hourTicks[i]
+            let x = labelWidth + CGFloat(tick / totalSeconds) * chartWidth
+            Text("\(Int(tick / 3600))h")
+                .font(.caption2)
+                .foregroundColor(.secondary)
+                .offset(x: x - 10, y: chartHeight + 2)
+        }
+    }
+)
+
                     }
 
                     // Stage labels
@@ -612,7 +638,7 @@ struct SleepStageHypnogramView: View {
                     // Time labels
                     ForEach(hourTicks.indices, id: \.self) { i in
                         let tick = hourTicks[i]
-                        let x = labelWidth + CGFloat(tick / totalDuration) * chartWidth
+                        let x = labelWidth + CGFloat(tick / totalSeconds) * chartWidth
                         Text("\(Int(tick / 3600))h")
                             .font(.caption2)
                             .foregroundColor(.secondary)
