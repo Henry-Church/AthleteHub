@@ -2,6 +2,8 @@
 
 import SwiftUI
 
+import SwiftUI
+
 struct NutritionView: View {
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var userProfile: UserProfile
@@ -54,6 +56,7 @@ struct NutritionView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                // Header
                 HStack {
                     Text("Nutrition Dashboard")
                         .font(.title)
@@ -78,13 +81,14 @@ struct NutritionView: View {
                 }
                 .padding(.horizontal)
 
+                // Score & Insights
                 OverallNutritionScoreCard(score: overallNutritionScore, colorScheme: colorScheme)
                     .padding(.horizontal)
 
                 NutritionInsightsCard(insights: generateNutritionInsights(), colorScheme: colorScheme)
                     .padding(.horizontal)
 
-                // Metric Cards
+                // Macronutrient and Water Cards
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
                     NutritionRingCard(
                         title: "Calories",
@@ -136,9 +140,10 @@ struct NutritionView: View {
                 )
                 .padding(.horizontal)
 
+                // Trends
                 NutritionChartCard(title: "7-Day Nutrition Trends", colorScheme: colorScheme) {
                     if userProfile.dailyIntakeTrendsAvailable {
-                        // Insert real chart here
+                        // TODO: Insert actual chart view
                     } else {
                         Text("Data not available")
                             .foregroundColor(.secondary)
@@ -148,6 +153,7 @@ struct NutritionView: View {
                             .cornerRadius(12)
                     }
                 }
+                .padding(.horizontal)
             }
             .padding(.vertical)
         }
@@ -180,12 +186,14 @@ struct NutritionRingCard: View {
 
     var body: some View {
         VStack(spacing: 16) {
+            // Title
             HStack {
                 Label(title, systemImage: icon)
                     .font(.headline)
                 Spacer()
             }
 
+            // Circular ring
             ZStack {
                 Circle()
                     .stroke(Color.gray.opacity(0.2), lineWidth: 10)
@@ -207,6 +215,7 @@ struct NutritionRingCard: View {
                 }
             }
 
+            // Percentage text
             Text("\(percentage) of daily target")
                 .font(.caption2)
                 .foregroundColor(.secondary)
@@ -214,59 +223,13 @@ struct NutritionRingCard: View {
         .padding()
         .frame(maxWidth: .infinity)
         .frame(height: 180)
-        .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
+        .background(
+            colorScheme == .dark
+            ? Color(.secondarySystemBackground)
+            : Color(.systemBackground)
+        )
         .cornerRadius(16)
-        .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
-        .onAppear {
-            withAnimation(.easeOut(duration: 1.0)) {
-                animatedProgress = progress
-            }
-        }
-    }
-}
-
-struct WaterIntakeCard: View {
-    let intake: String
-    let goal: String
-    let percentage: String
-    let colorScheme: ColorScheme
-
-    @State private var animatedProgress: Double = 0.0
-
-    private var progress: Double {
-        (Double(percentage.replacingOccurrences(of: "%", with: "")) ?? 0) / 100.0
-    }
-
-    var body: some View {
-        VStack(spacing: 16) {
-            HStack {
-                Image(systemName: "drop.fill")
-                    .foregroundColor(.blue)
-                Text("Water")
-                    .font(.headline)
-                Spacer()
-            }
-
-            ZStack(alignment: .bottom) {
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(Color.blue.opacity(0.2))
-                    .frame(width: 40, height: 100)
-
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(Color.blue)
-                    .frame(width: 40, height: CGFloat(animatedProgress) * 100)
-            }
-
-            Text("\(intake) / \(goal)")
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-        .padding()
-        .frame(maxWidth: .infinity)
-        .frame(height: 180)
-        .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
-        .cornerRadius(16)
-        .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
+        .shadow(color: ringColor.opacity(0.3), radius: 8, x: 0, y: 4)
         .onAppear {
             withAnimation(.easeOut(duration: 1.0)) {
                 animatedProgress = progress
@@ -432,9 +395,11 @@ struct SetNutritionGoalsView: View {
     }
 }
 
+import SwiftUI
+
 struct ManualNutritionEntryView: View {
-    @EnvironmentObject var userProfile: UserProfile
     @Environment(\.presentationMode) var presentationMode
+    @EnvironmentObject var userProfile: UserProfile
 
     @State private var calories: String = ""
     @State private var protein: String = ""
@@ -496,3 +461,4 @@ struct ManualNutritionEntryView: View {
         presentationMode.wrappedValue.dismiss()
     }
 }
+
