@@ -61,41 +61,65 @@ class UserProfile: ObservableObject {
     @Published var sleepPhaseAnalysisAvailable: Bool = false
     
     // Nutrition Metrics
-    @Published var caloriesConsumed: String? = nil
-    @Published var caloriesGoal: String? = nil
-    @Published var caloriesPercentage: String? = nil
-    @Published var caloriesStatus: String? = nil
-    @Published var caloriesDescription: String? = nil
+    @Published var caloriesConsumed: String? {
+        didSet { recalcCaloriesPercentage() }
+    }
+    @Published var caloriesGoal: String? {
+        didSet { recalcCaloriesPercentage() }
+    }
+    @Published var caloriesPercentage: String?
+    @Published var caloriesStatus: String?
+    @Published var caloriesDescription: String?
     
-    @Published var proteinIntake: String? = nil
-    @Published var proteinGoal: String? = nil
-    @Published var proteinPercentage: String? = nil
-    @Published var proteinStatus: String? = nil
-    @Published var proteinDescription: String? = nil
+    @Published var proteinIntake: String? {
+        didSet { recalcProteinPercentage() }
+    }
+    @Published var proteinGoal: String? {
+        didSet { recalcProteinPercentage() }
+    }
+    @Published var proteinPercentage: String?
+    @Published var proteinStatus: String?
+    @Published var proteinDescription: String?
     
-    @Published var carbsIntake: String? = nil
-    @Published var carbsGoal: String? = nil
-    @Published var carbsPercentage: String? = nil
-    @Published var carbsStatus: String? = nil
-    @Published var carbsDescription: String? = nil
+    @Published var carbsIntake: String? {
+        didSet { recalcCarbsPercentage() }
+    }
+    @Published var carbsGoal: String? {
+        didSet { recalcCarbsPercentage() }
+    }
+    @Published var carbsPercentage: String?
+    @Published var carbsStatus: String?
+    @Published var carbsDescription: String?
     
-    @Published var fatIntake: String? = nil
-    @Published var fatGoal: String? = nil
-    @Published var fatPercentage: String? = nil
-    @Published var fatStatus: String? = nil
-    @Published var fatDescription: String? = nil
+    @Published var fatIntake: String? {
+        didSet { recalcFatPercentage() }
+    }
+    @Published var fatGoal: String? {
+        didSet { recalcFatPercentage() }
+    }
+    @Published var fatPercentage: String?
+    @Published var fatStatus: String?
+    @Published var fatDescription: String?
     
-    @Published var waterIntake: String? = nil
-    @Published var waterGoal: String? = nil
-    @Published var waterPercentage: String? = nil
-    @Published var waterStatus: String? = nil
-    @Published var waterDescription: String? = nil
+    @Published var waterIntake: String? {
+        didSet { recalcWaterPercentage() }
+    }
+    @Published var waterGoal: String? {
+        didSet { recalcWaterPercentage() }
+    }
+    @Published var waterPercentage: String?
+    @Published var waterStatus: String?
+    @Published var waterDescription: String?
     
-    @Published var fiberIntake: String? = nil
-    @Published var fiberGoal: String? = nil
-    @Published var fiberPercentage: String? = nil
-    @Published var fiberStatus: String? = nil
-    @Published var fiberDescription: String? = nil
+    @Published var fiberIntake: String? {
+        didSet { recalcFiberPercentage() }
+    }
+    @Published var fiberGoal: String? {
+        didSet { recalcFiberPercentage() }
+    }
+    @Published var fiberPercentage: String?
+    @Published var fiberStatus: String?
+    @Published var fiberDescription: String?
     
     @Published var macronutrientBreakdownAvailable: Bool = false
     @Published var dailyIntakeTrendsAvailable: Bool = false
@@ -104,6 +128,49 @@ class UserProfile: ObservableObject {
     @Published var trainingLog: [String] = []
     @Published var meals: [String] = []
     @Published var recoveryActivities: [String] = []
+    
+    // MARK: - Percentage Calculations
+    private func recalcCaloriesPercentage() {
+        let consumed = Double(caloriesConsumed ?? "") ?? 0
+        let goal     = Double(caloriesGoal     ?? "") ?? 1
+        let pct      = Int((consumed / goal) * 100)
+        caloriesPercentage = "\(pct)%"
+    }
+    
+    private func recalcProteinPercentage() {
+        let consumed = Double(proteinIntake ?? "") ?? 0
+        let goal     = Double(proteinGoal   ?? "") ?? 1
+        let pct      = Int((consumed / goal) * 100)
+        proteinPercentage = "\(pct)%"
+    }
+    
+    private func recalcCarbsPercentage() {
+        let consumed = Double(carbsIntake ?? "") ?? 0
+        let goal     = Double(carbsGoal   ?? "") ?? 1
+        let pct      = Int((consumed / goal) * 100)
+        carbsPercentage = "\(pct)%"
+    }
+    
+    private func recalcFatPercentage() {
+        let consumed = Double(fatIntake ?? "") ?? 0
+        let goal     = Double(fatGoal   ?? "") ?? 1
+        let pct      = Int((consumed / goal) * 100)
+        fatPercentage = "\(pct)%"
+    }
+    
+    private func recalcWaterPercentage() {
+        let consumed = Double(waterIntake ?? "") ?? 0
+        let goal     = Double(waterGoal   ?? "") ?? 1
+        let pct      = Int((consumed / goal) * 100)
+        waterPercentage = "\(pct)%"
+    }
+    
+    private func recalcFiberPercentage() {
+        let consumed = Double(fiberIntake ?? "") ?? 0
+        let goal     = Double(fiberGoal   ?? "") ?? 1
+        let pct      = Int((consumed / goal) * 100)
+        fiberPercentage = "\(pct)%"
+    }
     
     // MARK: - Firestore Integration
     func loadFromFirestore() {
@@ -123,6 +190,7 @@ class UserProfile: ObservableObject {
                     self.height = data["height"] as? Double ?? self.height
                     self.weight = data["weight"] as? Double ?? self.weight
                     self.age = data["age"] as? Int ?? self.age
+                    
                     self.sleepDuration = data["sleepDuration"] as? String
                     self.sleepDurationStatus = data["sleepDurationStatus"] as? String
                     self.sleepDurationDescription = data["sleepDurationDescription"] as? String
@@ -143,118 +211,33 @@ class UserProfile: ObservableObject {
                     self.overallRecoveryDescription = data["overallRecoveryDescription"] as? String
                     self.recoveryTrendsAvailable = data["recoveryTrendsAvailable"] as? Bool ?? false
                     self.sleepPhaseAnalysisAvailable = data["sleepPhaseAnalysisAvailable"] as? Bool ?? false
+                    
                     self.caloriesConsumed = data["caloriesConsumed"] as? String
                     self.caloriesGoal = data["caloriesGoal"] as? String
-                    self.caloriesPercentage = data["caloriesPercentage"] as? String
                     self.caloriesStatus = data["caloriesStatus"] as? String
                     self.caloriesDescription = data["caloriesDescription"] as? String
+                    
                     self.proteinIntake = data["proteinIntake"] as? String
                     self.proteinGoal = data["proteinGoal"] as? String
-                    self.proteinPercentage = data["proteinPercentage"] as? String
                     self.proteinStatus = data["proteinStatus"] as? String
                     self.proteinDescription = data["proteinDescription"] as? String
+                    
                     self.carbsIntake = data["carbsIntake"] as? String
                     self.carbsGoal = data["carbsGoal"] as? String
-                    self.carbsPercentage = data["carbsPercentage"] as? String
                     self.carbsStatus = data["carbsStatus"] as? String
                     self.carbsDescription = data["carbsDescription"] as? String
+                    
                     self.fatIntake = data["fatIntake"] as? String
                     self.fatGoal = data["fatGoal"] as? String
-                    self.fatPercentage = data["fatPercentage"] as? String
                     self.fatStatus = data["fatStatus"] as? String
                     self.fatDescription = data["fatDescription"] as? String
+                    
                     self.waterIntake = data["waterIntake"] as? String
                     self.waterGoal = data["waterGoal"] as? String
-                    self.waterPercentage = data["waterPercentage"] as? String
                     self.waterStatus = data["waterStatus"] as? String
                     self.waterDescription = data["waterDescription"] as? String
-                    self.fiberIntake = data["fiberIntake"] as? String
-                    self.fiberGoal = data["fiberGoal"] as? String
-                    self.fiberPercentage = data["fiberPercentage"] as? String
-                    self.fiberStatus = data["fiberStatus"] as? String
-                    self.fiberDescription = data["fiberDescription"] as? String
-                    self.macronutrientBreakdownAvailable = data["macronutrientBreakdownAvailable"] as? Bool ?? false
-                    self.dailyIntakeTrendsAvailable = data["dailyIntakeTrendsAvailable"] as? Bool ?? false
-                    self.trainingLog = data["trainingLog"] as? [String] ?? []
-                    self.meals = data["meals"] as? [String] ?? []
-                    self.recoveryActivities = data["recoveryActivities"] as? [String] ?? []
+
                 }
-            }
-        }
-    }
-    
-    func saveToFirestore() {
-        guard !uid.isEmpty else { return }
-        let db = Firestore.firestore()
-        db.collection("users").document(uid).setData([
-            "name": name,
-            "role": role,
-            "phone": phone,
-            "birthDate": birthDate,
-            "sex": sex,
-            "height": height,
-            "weight": weight,
-            "age": age,
-            "sleepDuration": sleepDuration ?? "",
-            "sleepDurationStatus": sleepDurationStatus ?? "",
-            "sleepDurationDescription": sleepDurationDescription ?? "",
-            "sleepQuality": sleepQuality ?? "",
-            "sleepQualityStatus": sleepQualityStatus ?? "",
-            "sleepQualityDescription": sleepQualityDescription ?? "",
-            "stressLevel": stressLevel ?? "",
-            "stressLevelStatus": stressLevelStatus ?? "",
-            "stressLevelDescription": stressLevelDescription ?? "",
-            "restingHeartRate": restingHeartRate ?? "",
-            "restingHeartRateStatus": restingHeartRateStatus ?? "",
-            "restingHeartRateDescription": restingHeartRateDescription ?? "",
-            "hrv": hrv ?? "",
-            "hrvStatus": hrvStatus ?? "",
-            "hrvDescription": hrvDescription ?? "",
-            "overallRecoveryScore": overallRecoveryScore ?? "",
-            "overallRecoveryStatus": overallRecoveryStatus ?? "",
-            "overallRecoveryDescription": overallRecoveryDescription ?? "",
-            "recoveryTrendsAvailable": recoveryTrendsAvailable,
-            "sleepPhaseAnalysisAvailable": sleepPhaseAnalysisAvailable,
-            "caloriesConsumed": caloriesConsumed ?? "",
-            "caloriesGoal": caloriesGoal ?? "",
-            "caloriesPercentage": caloriesPercentage ?? "",
-            "caloriesStatus": caloriesStatus ?? "",
-            "caloriesDescription": caloriesDescription ?? "",
-            "proteinIntake": proteinIntake ?? "",
-            "proteinGoal": proteinGoal ?? "",
-            "proteinPercentage": proteinPercentage ?? "",
-            "proteinStatus": proteinStatus ?? "",
-            "proteinDescription": proteinDescription ?? "",
-            "carbsIntake": carbsIntake ?? "",
-            "carbsGoal": carbsGoal ?? "",
-            "carbsPercentage": carbsPercentage ?? "",
-            "carbsStatus": carbsStatus ?? "",
-            "carbsDescription": carbsDescription ?? "",
-            "fatIntake": fatIntake ?? "",
-            "fatGoal": fatGoal ?? "",
-            "fatPercentage": fatPercentage ?? "",
-            "fatStatus": fatStatus ?? "",
-            "fatDescription": fatDescription ?? "",
-            "waterIntake": waterIntake ?? "",
-            "waterGoal": waterGoal ?? "",
-            "waterPercentage": waterPercentage ?? "",
-            "waterStatus": waterStatus ?? "",
-            "waterDescription": waterDescription ?? "",
-            "fiberIntake": fiberIntake ?? "",
-            "fiberGoal": fiberGoal ?? "",
-            "fiberPercentage": fiberPercentage ?? "",
-            "fiberStatus": fiberStatus ?? "",
-            "fiberDescription": fiberDescription ?? "",
-            "macronutrientBreakdownAvailable": macronutrientBreakdownAvailable,
-            "dailyIntakeTrendsAvailable": dailyIntakeTrendsAvailable,
-            "trainingLog": trainingLog,
-            "meals": meals,
-            "recoveryActivities": recoveryActivities
-        ], merge: true) { error in
-            if let error = error {
-                print("Error saving user data: \(error.localizedDescription)")
-            } else {
-                print("Successfully saved user data!")
             }
         }
     }
