@@ -538,6 +538,7 @@ struct RecentWorkoutsCard: View {
     }
 }
 
+
 struct TrainingScoreTrendCard: View {
     @ObservedObject var healthManager: HealthManager
     @Environment(\.colorScheme) var colorScheme
@@ -576,11 +577,16 @@ struct TrainingScoreTrendCard: View {
             }
         }
         .padding()
-        .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color.white)
+        .background(
+            colorScheme == .dark
+            ? Color(.secondarySystemBackground)
+            : Color.white
+        )
         .cornerRadius(16)
         .padding(.horizontal)
     }
 }
+
 
 
 struct WorkoutDetailView: View {
