@@ -239,9 +239,13 @@ struct NutritionView: View {
                     VStack(spacing: 2) {
                         Text(value)
                             .font(.title2).bold()
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.5)
                             .foregroundColor(ringColor)
                         Text("/ \(goal)")
                             .font(.caption)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.5)
                             .foregroundColor(.secondary)
                     }
                 }
@@ -256,9 +260,9 @@ struct NutritionView: View {
                         ? Color(.secondarySystemBackground)
                         : Color(.systemBackground))
             .cornerRadius(16)
-            .shadow(color: ringColor.opacity(0.3), radius: 8, x: 0, y: 4)
+            .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
             .onAppear {
-                withAnimation(.easeOut(duration: 1.0)) {
+                withAnimation(.easeOut(duration: 1.2)) {
                     animatedProgress = progress
                 }
             }
@@ -282,14 +286,8 @@ struct NutritionView: View {
             (Double(percentage.replacingOccurrences(of: "%", with: "")) ?? 0) / 100
         }
         
-        // same thresholds, or adjust as you like
-        private var ringColor: Color {
-            switch progress {
-            case ..<0.5:  return .red
-            case ..<0.8:  return .yellow
-            default:      return .green
-            }
-        }
+        // ring is always blue for water intake
+        private var ringColor: Color { .blue }
         
         private var numericIntake: Double {
             Double(intake) ?? 0
@@ -323,9 +321,13 @@ struct NutritionView: View {
                     VStack(spacing: 2) {
                         Text(String(format: "%.1f L", numericIntake))
                             .font(.title2).bold()
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.5)
                             .foregroundColor(ringColor)
                         Text(String(format: "/ %.1f L", numericGoal))
                             .font(.caption)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.5)
                             .foregroundColor(.secondary)
                     }
                 }
@@ -343,9 +345,9 @@ struct NutritionView: View {
                         ? Color(.secondarySystemBackground)
                         : Color(.systemBackground))
             .cornerRadius(16)
-            .shadow(color: ringColor.opacity(0.3), radius: 8, x: 0, y: 4)
+            .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
             .onAppear {
-                withAnimation(.easeOut(duration: 1.0)) {
+                withAnimation(.easeOut(duration: 1.2)) {
                     animatedProgress = progress
                 }
             }
