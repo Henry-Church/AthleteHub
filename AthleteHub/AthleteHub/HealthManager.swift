@@ -123,7 +123,7 @@ class HealthManager: ObservableObject {
         fetchTotalCalories { _ in self.save() }
         fetchWeeklyDistance { _ in }
         fetchWeeklyHours { _ in }
-        fetchDailyDistance { _ in self.save() }
+        fetchWorkoutDistance { _ in self.save() }
         fetchWorkoutDuration { _ in self.save() }
         fetchRestingHeartRate { _ in self.save() }
         fetchHRV { _ in self.save() }
@@ -172,6 +172,7 @@ class HealthManager: ObservableObject {
                     print("❌ Error saving daily metrics: \(error.localizedDescription)")
                 } else {
                     print("✅ Saved metrics for \(dateString)")
+                    self.updateDailyTrainingScore(Int(self.calculateOverallTrainingScore()))
                 }
             }
     }
@@ -348,6 +349,29 @@ class HealthManager: ObservableObject {
                 completion(km)
             }
         }
+        healthStore.execute(query)
+    }
+
+    func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
+        let workoutType = HKObjectType.workoutType()
+        let startOfDay = Calendar.current.startOfDay(for: Date())
+        let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: Date(), options: .strictStartDate)
+
+        let query = HKSampleQuery(sampleType: workoutType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, error in
+            guard let workouts = samples as? [HKWorkout], error == nil else {
+                DispatchQueue.main.async { completion(nil) }
+                return
+            }
+
+            let meters = workouts.reduce(0.0) { $0 + ($1.totalDistance?.doubleValue(for: .meter()) ?? 0) }
+            let km = meters / 1000
+
+            DispatchQueue.main.async {
+                self.distance = km
+                completion(km)
+            }
+        }
+
         healthStore.execute(query)
     }
     
@@ -638,6 +662,20 @@ class HealthManager: ObservableObject {
             .collection("trainingScores")
             .document(newScore.id)
             .setData(from: newScore)
+    }
+
+    func updateDailyTrainingScore(_ score: Int) {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        let calendar = Calendar.current
+        if let existing = trainingScores.first(where: { calendar.isDate($0.date, inSameDayAs: Date()) }) {
+            try? db.collection("users")
+                .document(uid)
+                .collection("trainingScores")
+                .document(existing.id)
+                .setData(["date": existing.date, "score": score], merge: true)
+        } else {
+            addTrainingScore(score)
+        }
     }
 
     func fetchTrainingScores() {

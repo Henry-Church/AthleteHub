@@ -510,11 +510,11 @@ struct RecentWorkoutsCard: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Recent Workouts")
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundColor(.primary)
 
             if healthManager.recentWorkouts.isEmpty {
                 Text("Data not available")
-                    .foregroundColor(.gray)
+                    .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 20)
             } else {
@@ -530,28 +530,28 @@ struct RecentWorkoutsCard: View {
                             VStack(alignment: .leading) {
                                 Text(workout.workoutActivityType.name)
                                     .font(.subheadline)
-                                    .foregroundColor(.white)
+                                    .foregroundColor(.primary)
 
                                 Text(formattedDateTime(workout.startDate))
                                     .font(.caption)
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(.secondary)
                             }
 
                             Spacer()
 
                             Image(systemName: "chevron.right")
-                                .foregroundColor(.gray)
+                                .foregroundColor(.secondary)
                         }
                         .padding(.vertical, 4)
                     }
 
-                    Divider().background(Color.white.opacity(0.2))
+                    Divider().background(Color.primary.opacity(0.2))
                 }
 
             }
         }
         .padding()
-        .background(Color(.secondarySystemBackground))
+        .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color.white)
         .cornerRadius(16)
         .padding(.horizontal)
         .sheet(isPresented: $showingWorkoutDetail) {
