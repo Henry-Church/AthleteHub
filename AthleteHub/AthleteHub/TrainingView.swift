@@ -538,8 +538,10 @@ struct RecentWorkoutsCard: View {
     }
 }
 
+
 struct TrainingScoreTrendCard: View {
     @ObservedObject var healthManager: HealthManager
+    @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -547,11 +549,11 @@ struct TrainingScoreTrendCard: View {
                 .font(.headline)
                 .foregroundColor(.primary)
 
-            if healthManager.lastSevenScores.isEmpty {
+            if healthManager.lastSevenScoresFilled.allSatisfy({ $0.score == 0 }) {
                 Text("No training scores yet.")
                     .foregroundColor(.secondary)
             } else {
-                Chart(healthManager.lastSevenScores) { entry in
+                Chart(healthManager.lastSevenScoresFilled) { entry in
                     LineMark(
                         x: .value("Date", entry.date),
                         y: .value("Score", entry.score)
@@ -575,11 +577,16 @@ struct TrainingScoreTrendCard: View {
             }
         }
         .padding()
-        .background(Color(.systemGray6))
+        .background(
+            colorScheme == .dark
+            ? Color(.secondarySystemBackground)
+            : Color.white
+        )
         .cornerRadius(16)
         .padding(.horizontal)
     }
 }
+
 
 
 struct WorkoutDetailView: View {

@@ -51,6 +51,16 @@ class HealthManager: ObservableObject {
             .filter { $0.date >= Calendar.current.startOfDay(for: start) }
             .sorted { $0.date < $1.date }
     }
+/// Last seven days including today, ensuring every day has a value
+var lastSevenScoresFilled: [TrainingScore] {
+    let calendar = Calendar.current
+    return (0..<7).map { offset in
+        let day = calendar.startOfDay(for: calendar.date(byAdding: .day, value: -6 + offset, to: Date())!)
+        let score = trainingScores.first { calendar.isDate($0.date, inSameDayAs: day) }?.score ?? 0
+        return TrainingScore(date: day, score: score)
+    }
+}
+
     @Published var recentWorkouts: [HKWorkout] = []
     @Published var recoveryScore: Double? = nil
     @Published var stressLevel: Double? = nil
@@ -344,20 +354,50 @@ class HealthManager: ObservableObject {
     }
 
     func fetchDailyDistance(completion: @escaping (Double?) -> Void) {
-        guard let type = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning) else { return completion(nil) }
-        let startOfDay = Calendar.current.startOfDay(for: Date())
-        let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: Date(), options: .strictStartDate)
-
-        let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, _ in
-            let meters = result?.sumQuantity()?.doubleValue(for: .meter()) ?? 0
-            let km = meters / 1000
-            DispatchQueue.main.async {
-                self.distance = km
-                completion(km)
-            }
-        }
-        healthStore.execute(query)
+    guard let type = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning) else {
+        return completion(nil)
     }
+
+    let startOfDay = Calendar.current.startOfDay(for: Date())
+    let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: Date(), options: .strictStartDate)
+
+    let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, _ in
+        let meters = result?.sumQuantity()?.doubleValue(for: .meter()) ?? 0
+        let km = meters / 1000
+
+        DispatchQueue.main.async {
+            self.distance = km
+            completion(km)
+        }
+    }
+
+    healthStore.execute(query)
+}
+
+func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
+    let workoutType = HKObjectType.workoutType()
+    let startOfDay = Calendar.current.startOfDay(for: Date())
+    let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: Date(), options: .strictStartDate)
+
+    let query = HKSampleQuery(sampleType: workoutType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, error in
+        guard let workouts = samples as? [HKWorkout], error == nil else {
+            DispatchQueue.main.async {
+                completion(nil)
+            }
+            return
+        }
+
+        let meters = workouts.reduce(0.0) { $0 + ($1.totalDistance?.doubleValue(for: .meter()) ?? 0) }
+        let km = meters / 1000
+
+        DispatchQueue.main.async {
+            completion(km)
+        }
+    }
+
+    healthStore.execute(query)
+}
+
 
     func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
         let workoutType = HKObjectType.workoutType()
@@ -687,15 +727,35 @@ class HealthManager: ObservableObject {
 
     func fetchTrainingScores() {
         guard let uid = Auth.auth().currentUser?.uid else { return }
+
+        let startDate = Calendar.current.date(byAdding: .day, value: -6, to: Date()) ?? Date()
+        let startString = dateFormatter.string(from: startDate)
+
         db.collection("users")
             .document(uid)
-            .collection("trainingScores")
+            .collection("dailyMetrics")
+            .whereField("date", isGreaterThanOrEqualTo: startString)
             .order(by: "date", descending: false)
-            .limit(toLast: 7)
             .addSnapshotListener { snapshot, _ in
                 guard let docs = snapshot?.documents else { return }
-                self.trainingScores = docs.compactMap {
-                    try? $0.data(as: TrainingScore.self)
+                self.trainingScores = docs.compactMap { doc in
+                    let data = doc.data()
+                    guard let dateStr = data["date"] as? String,
+                          let scoreAny = data["trainingScore"],
+                          let date = self.dateFormatter.date(from: dateStr) else {
+                        return nil
+                    }
+
+                    let score: Int
+                    if let s = scoreAny as? Int {
+                        score = s
+                    } else if let d = scoreAny as? Double {
+                        score = Int(d)
+                    } else {
+                        score = 0
+                    }
+
+                    return TrainingScore(id: doc.documentID, date: date, score: score)
                 }
             }
     }
