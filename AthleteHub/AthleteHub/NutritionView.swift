@@ -52,183 +52,186 @@ struct NutritionView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                HStack {
-                    Text("Nutrition Dashboard")
-                        .font(.title)
-                        .fontWeight(.bold)
-                        .foregroundColor(colorScheme == .dark ? .white : .black)
-                    Spacer()
-                    HStack(spacing: 12) {
-                        Button(action: { showingSetGoals = true }) {
-                            Image(systemName: "target")
-                                .padding(8)
-                                .background(Color.green.opacity(0.2))
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                        }
+    ScrollView {
+        VStack(alignment: .leading, spacing: 20) {
+            // Header with title and action buttons
+            HStack {
+                Text("Nutrition Dashboard")
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .foregroundColor(colorScheme == .dark ? .white : .black)
 
-                        Button(action: { showingManualEntry = true }) {
-                            Image(systemName: "square.and.pencil")
-                                .padding(8)
-                                .background(Color.green.opacity(0.2))
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                        }
+                Spacer()
+
+                HStack(spacing: 12) {
+                    Button(action: { showingSetGoals = true }) {
+                        Image(systemName: "target")
+                            .padding(8)
+                            .background(Color.green.opacity(0.2))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+
+                    Button(action: { showingManualEntry = true }) {
+                        Image(systemName: "square.and.pencil")
+                            .padding(8)
+                            .background(Color.green.opacity(0.2))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                 }
-                .padding(.horizontal)
-
-                OverallNutritionScoreCard(score: overallNutritionScore, colorScheme: colorScheme)
-                    .padding(.horizontal)
-
-                NutritionInsightsCard(insights: generateNutritionInsights(), colorScheme: colorScheme)
-                    .padding(.horizontal)
-
-                // Charts at Top
-                NutritionChartCard(title: "Overall Nutrition Score", colorScheme: colorScheme) {
-                    if userProfile.dailyIntakeTrendsAvailable {
-                        // Insert real chart here
-                    } else {
-                        Text("Data not available")
-                            .foregroundColor(.secondary)
-                            .frame(height: 150)
-                            .frame(maxWidth: .infinity)
-                            .background(Color(.secondarySystemBackground))
-                            .cornerRadius(12)
-                    }
-                }
-
-                NutritionChartCard(title: "7-Day Nutrition Trends", colorScheme: colorScheme) {
-                    if userProfile.dailyIntakeTrendsAvailable {
-                        // Insert real chart here
-                    } else {
-                        Text("Data not available")
-                            .foregroundColor(.secondary)
-                            .frame(height: 150)
-                            .frame(maxWidth: .infinity)
-                            .background(Color(.secondarySystemBackground))
-                            .cornerRadius(12)
-                    }
-                }
-
-                // Metric Cards Below
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                    NutritionMetricCard(
-                        title: "Calories",
-                        value: userProfile.caloriesConsumed ?? "0",
-                        goal: userProfile.caloriesGoal ?? "0 cal",
-                        percentage: userProfile.caloriesPercentage ?? "0%",
-                        status: userProfile.caloriesStatus ?? "Data not available",
-                        colorScheme: colorScheme
-                    )
-
-                    NutritionMetricCard(
-                        title: "Protein",
-                        value: userProfile.proteinIntake ?? "0",
-                        goal: userProfile.proteinGoal ?? "0 g",
-                        percentage: userProfile.proteinPercentage ?? "0%",
-                        status: userProfile.proteinStatus ?? "Data not available",
-                        colorScheme: colorScheme
-                    )
-
-                    NutritionMetricCard(
-                        title: "Carbs",
-                        value: userProfile.carbsIntake ?? "0",
-                        goal: userProfile.carbsGoal ?? "0 g",
-                        percentage: userProfile.carbsPercentage ?? "0%",
-                        status: userProfile.carbsStatus ?? "Data not available",
-                        colorScheme: colorScheme
-                    )
-
-                    NutritionMetricCard(
-                        title: "Fat",
-                        value: userProfile.fatIntake ?? "0",
-                        goal: userProfile.fatGoal ?? "0 g",
-                        percentage: userProfile.fatPercentage ?? "0%",
-                        status: userProfile.fatStatus ?? "Data not available",
-                        colorScheme: colorScheme
-                    )
-
-                    NutritionMetricCard(
-                        title: "Water",
-                        value: userProfile.waterIntake ?? "0",
-                        goal: userProfile.waterGoal ?? "0 L",
-                        percentage: userProfile.waterPercentage ?? "0%",
-                        status: userProfile.waterStatus ?? "Data not available",
-                        colorScheme: colorScheme
-                    )
-
-                    NutritionMetricCard(
-                        title: "Fiber",
-                        value: userProfile.fiberIntake ?? "0",
-                        goal: userProfile.fiberGoal ?? "0 g",
-                        percentage: userProfile.fiberPercentage ?? "0%",
-                        status: userProfile.fiberStatus ?? "Data not available",
-                        colorScheme: colorScheme
-                    )
-                }
-                .padding(.horizontal)
             }
-            .padding(.vertical)
+            .padding(.horizontal)
+
+            // Score and Insights
+            OverallNutritionScoreCard(score: overallNutritionScore, colorScheme: colorScheme)
+                .padding(.horizontal)
+
+            NutritionInsightsCard(insights: generateNutritionInsights(), colorScheme: colorScheme)
+                .padding(.horizontal)
+
+            // Metric Rings
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                NutritionRingCard(
+                    title: "Calories",
+                    icon: "flame.fill",
+                    value: userProfile.caloriesConsumed ?? "0",
+                    goal: userProfile.caloriesGoal ?? "0 cal",
+                    percentage: userProfile.caloriesPercentage ?? "0%",
+                    ringColor: .orange,
+                    colorScheme: colorScheme
+                )
+
+                NutritionRingCard(
+                    title: "Protein",
+                    icon: "bolt.fill",
+                    value: userProfile.proteinIntake ?? "0",
+                    goal: userProfile.proteinGoal ?? "0 g",
+                    percentage: userProfile.proteinPercentage ?? "0%",
+                    ringColor: .red,
+                    colorScheme: colorScheme
+                )
+
+                NutritionRingCard(
+                    title: "Carbs",
+                    icon: "leaf.fill",
+                    value: userProfile.carbsIntake ?? "0",
+                    goal: userProfile.carbsGoal ?? "0 g",
+                    percentage: userProfile.carbsPercentage ?? "0%",
+                    ringColor: .yellow,
+                    colorScheme: colorScheme
+                )
+
+                NutritionRingCard(
+                    title: "Fat",
+                    icon: "chart.pie.fill",
+                    value: userProfile.fatIntake ?? "0",
+                    goal: userProfile.fatGoal ?? "0 g",
+                    percentage: userProfile.fatPercentage ?? "0%",
+                    ringColor: .purple,
+                    colorScheme: colorScheme
+                )
+
+                NutritionRingCard(
+                    title: "Water",
+                    icon: "drop.fill",
+                    value: userProfile.waterIntake ?? "0",
+                    goal: userProfile.waterGoal ?? "0 L",
+                    percentage: userProfile.waterPercentage ?? "0%",
+                    ringColor: .blue,
+                    colorScheme: colorScheme
+                )
+            }
+            .padding(.horizontal)
+
+            // Nutrition Trends Chart
+            NutritionChartCard(title: "7-Day Nutrition Trends", colorScheme: colorScheme) {
+                if userProfile.dailyIntakeTrendsAvailable {
+                    // TODO: Insert real chart here
+                } else {
+                    Text("Data not available")
+                        .foregroundColor(.secondary)
+                        .frame(height: 150)
+                        .frame(maxWidth: .infinity)
+                        .background(Color(.secondarySystemBackground))
+                        .cornerRadius(12)
+                }
+            }
         }
-        .background(Color.white.edgesIgnoringSafeArea(.all))
-        .sheet(isPresented: $showingSetGoals) {
-            SetNutritionGoalsView()
-                .environmentObject(userProfile)
-        }
-        .sheet(isPresented: $showingManualEntry) {
-            ManualNutritionEntryView()
-                .environmentObject(userProfile)
+        .padding(.vertical)
+    }
+    .background(Color.white.edgesIgnoringSafeArea(.all))
+    .sheet(isPresented: $showingSetGoals) {
+        SetNutritionGoalsView()
+            .environmentObject(userProfile)
+    }
+    .sheet(isPresented: $showingManualEntry) {
+        ManualNutritionEntryView()
+            .environmentObject(userProfile)
         }
     }
 }
 
-struct NutritionMetricCard: View {
+struct NutritionRingCard: View {
     let title: String
+    let icon: String
     let value: String
     let goal: String
     let percentage: String
-    let status: String
+    let ringColor: Color
     let colorScheme: ColorScheme
 
+    @State private var animatedProgress: Double = 0.0
+
+    private var progress: Double {
+        (Double(percentage.replacingOccurrences(of: "%", with: "")) ?? 0) / 100.0
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(spacing: 16) {
             HStack {
-                Text(title)
+                Label(title, systemImage: icon)
                     .font(.headline)
                 Spacer()
-                Text(status)
-                    .font(.caption)
-                    .fontWeight(.bold)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.blue.opacity(0.2))
-                    .foregroundColor(.blue)
-                    .cornerRadius(10)
             }
 
-            HStack(alignment: .firstTextBaseline) {
-                Text(value)
-                    .font(.title2)
-                    .fontWeight(.bold)
-                Text("/\(goal)")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
+            ZStack {
+                Circle()
+                    .stroke(Color.gray.opacity(0.2), lineWidth: 10)
+                    .frame(width: 100, height: 100)
 
-            ProgressView(value: Double(percentage.dropLast()) ?? 0, total: 100)
-                .accentColor(.black)
+                Circle()
+                    .trim(from: 0, to: CGFloat(animatedProgress))
+                    .stroke(ringColor, style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .frame(width: 100, height: 100)
+
+                VStack {
+                    Text(value)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                    Text("/\(goal)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
 
             Text("\(percentage) of daily target")
-                .font(.caption)
+                .font(.caption2)
                 .foregroundColor(.secondary)
         }
         .padding()
-        .background(colorScheme == .dark ? Color(.systemGray6) : Color.white)
-        .cornerRadius(12)
-        .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
+        .frame(maxWidth: .infinity)
+        .frame(height: 180)
+        .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
+        .cornerRadius(16)
+        .shadow(color: ringColor.opacity(0.3), radius: 8, x: 0, y: 4)
+        .onAppear {
+            withAnimation(.easeOut(duration: 1.0)) {
+                animatedProgress = progress
+            }
+        }
     }
 }
+
 
 struct NutritionChartCard<Content: View>: View {
     let title: String
