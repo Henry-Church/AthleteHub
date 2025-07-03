@@ -102,6 +102,30 @@ class HealthManager: ObservableObject {
         return calorieScore + stepScore + distanceScore + minutesScore
     }
 
+    /// Calculates a recovery score from sleep, HRV and stress metrics
+    /// - Returns: score as 0-100
+    func calculateOverallRecoveryScore() -> Double {
+        let defaults = UserDefaults.standard
+        let sleepGoal = defaults.double(forKey: "sleepGoal")
+        let hrvGoal = defaults.double(forKey: "hrvGoal")
+        let restingGoal = defaults.double(forKey: "restingHRGoal")
+
+        let sleepQuality = Double(sleepQualityScore ?? 0)
+        let sleepDurationScore = sleepGoal > 0 ? min((sleepDuration ?? 0) / sleepGoal, 1) * 100 : 0
+        let hrvScore = hrvGoal > 0 ? min((hrv ?? 0) / hrvGoal, 1) * 100 : 0
+        var restingScore: Double = 0
+        if restingGoal > 0 {
+            let ratio = (restingHeartRate ?? restingGoal) / restingGoal
+            restingScore = max(0, min(2 - ratio, 1)) * 100
+        }
+        let stressScore = max(0, 1 - ((stressLevel ?? 0) / 30)) * 100
+
+        let scores = [sleepQuality, sleepDurationScore, hrvScore, restingScore, stressScore]
+        let overall = scores.reduce(0, +) / Double(scores.count)
+        recoveryScore = overall
+        return overall
+    }
+
     func requestAuthorization(completion: @escaping (Bool) -> Void) {
         let typesToRead: Set = [
             HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!,
@@ -170,6 +194,8 @@ class HealthManager: ObservableObject {
         formatter.dateFormat = "yyyy-MM-dd"
         let dateString = formatter.string(from: today)
 
+        let recovery = calculateOverallRecoveryScore()
+
         let metrics: [String: Any] = [
             "date": dateString,
             "activeCalories": activeCalories ?? 0,
@@ -189,7 +215,7 @@ class HealthManager: ObservableObject {
             "sleepQuality": sleepQuality,
             "sleepQualityScore": sleepQualityScore ?? 0,
             "stressLevel": stressLevel ?? 0,
-            "recoveryScore": recoveryScore ?? 0,
+            "recoveryScore": recovery,
             "hrvWeek": hrvWeek
         ]
 
@@ -271,16 +297,21 @@ class HealthManager: ObservableObject {
 
         // ✅ Save to Firebase
         let date = Date()
+        let score = calculateOverallRecoveryScore()
         let recoveryData: [String: Any] = [
             "sleepDuration": sleepDuration,
             "sleepScore": sleepScore,
             "hrv": hrv,
             "restingHR": restingHR,
             "stressLevel": stressLevel,
+            "recoveryScore": score,
             "timestamp": Timestamp(date: date)
         ]
 
         db.collection("users").document(userId).collection("recovery").document(dateFormatter.string(from: date)).setData(recoveryData, merge: true)
+
+        // also update aggregated daily metrics
+        saveDailyMetricsToFirestore(userId: userId)
     }
 
 
