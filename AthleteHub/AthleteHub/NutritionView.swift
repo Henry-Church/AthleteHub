@@ -8,6 +8,7 @@ struct NutritionView: View {
     @EnvironmentObject var healthManager: HealthManager
 
     @State private var showingSetGoals = false
+    @State private var showingManualEntry = false
     @State private var activeMetric: MetricType?
 
     private func percentage(from text: String?) -> Double? {
@@ -54,6 +55,7 @@ struct NutritionView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                // Header
                 HStack {
                     Text("Nutrition Dashboard")
                         .font(.title)
@@ -68,17 +70,24 @@ struct NutritionView: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
 
+                        Button(action: { showingManualEntry = true }) {
+                            Image(systemName: "square.and.pencil")
+                                .padding(8)
+                                .background(Color.green.opacity(0.2))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
                     }
                 }
                 .padding(.horizontal)
 
+                // Score & Insights
                 OverallNutritionScoreCard(score: overallNutritionScore, colorScheme: colorScheme)
                     .padding(.horizontal)
 
                 NutritionInsightsCard(insights: generateNutritionInsights(), colorScheme: colorScheme)
                     .padding(.horizontal)
 
-                // Metric Cards
+                // Macronutrient and Water Cards
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
                     NutritionRingCard(
                         title: "Calories",
@@ -135,9 +144,10 @@ struct NutritionView: View {
                 )
                 .padding(.horizontal)
 
+                // Trends
                 NutritionChartCard(title: "7-Day Nutrition Trends", colorScheme: colorScheme) {
                     if userProfile.dailyIntakeTrendsAvailable {
-                        // Insert real chart here
+                        // TODO: Replace with real chart when ready
                     } else {
                         Text("Data not available")
                             .foregroundColor(.secondary)
@@ -162,6 +172,7 @@ struct NutritionView: View {
     }
 }
 
+
 struct NutritionRingCard: View {
     let title: String
     let icon: String
@@ -180,12 +191,14 @@ struct NutritionRingCard: View {
 
     var body: some View {
         VStack(spacing: 16) {
+            // Title
             HStack {
                 Label(title, systemImage: icon)
                     .font(.headline)
                 Spacer()
             }
 
+            // Ring visualization
             ZStack {
                 Circle()
                     .stroke(Color.gray.opacity(0.2), lineWidth: 10)
@@ -207,6 +220,7 @@ struct NutritionRingCard: View {
                 }
             }
 
+            // Percentage text
             Text("\(percentage) of daily target")
                 .font(.caption2)
                 .foregroundColor(.secondary)
@@ -214,17 +228,24 @@ struct NutritionRingCard: View {
         .padding()
         .frame(maxWidth: .infinity)
         .frame(height: 180)
-        .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
+        .background(
+            colorScheme == .dark
+                ? Color(.secondarySystemBackground)
+                : Color(.systemBackground)
+        )
         .cornerRadius(16)
-        .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
+        .shadow(color: ringColor.opacity(0.3), radius: 8, x: 0, y: 4)
         .onAppear {
             withAnimation(.easeOut(duration: 1.0)) {
                 animatedProgress = progress
             }
         }
-        .onTapGesture { onTap() }
+        .onTapGesture {
+            onTap()
+        }
     }
 }
+
 
 struct WaterIntakeCard: View {
     let intake: String
@@ -242,6 +263,8 @@ struct WaterIntakeCard: View {
     var body: some View {
         VStack(spacing: 16) {
             HStack {
+                Image(systemName: "drop.fill")
+                    .foregroundColor(.blue)
                 Text("Water")
                     .font(.headline)
                 Spacer()
@@ -275,7 +298,11 @@ struct WaterIntakeCard: View {
         .padding()
         .frame(maxWidth: .infinity)
         .frame(height: 200)
-        .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
+        .background(
+            colorScheme == .dark
+            ? Color(.secondarySystemBackground)
+            : Color(.systemBackground)
+        )
         .cornerRadius(16)
         .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
         .onAppear {
@@ -283,7 +310,9 @@ struct WaterIntakeCard: View {
                 animatedProgress = progress
             }
         }
-        .onTapGesture { onTap() }
+        .onTapGesture {
+            onTap()
+        }
     }
 }
 
@@ -445,7 +474,11 @@ struct SetNutritionGoalsView: View {
 }
 
 enum MetricType: String, Identifiable {
-    case calories, protein, carbs, fat, water
+    case calories
+    case protein
+    case carbs
+    case fat
+    case water
 
     var id: String { rawValue }
 
@@ -453,12 +486,13 @@ enum MetricType: String, Identifiable {
         switch self {
         case .calories: return "Calories"
         case .protein:  return "Protein"
-        case .carbs:    return "Carbs"
+        case .carbs:    return "Carbohydrates"
         case .fat:      return "Fat"
         case .water:    return "Water"
         }
     }
 }
+
 
 struct MetricDetailView: View {
     let metric: MetricType
@@ -529,6 +563,69 @@ struct MetricDetailView: View {
         case .water:    userProfile.waterIntake = value
         }
         userProfile.saveToFirestore()
+
+
+struct ManualNutritionEntryView: View {
+    @Environment(\.presentationMode) var presentationMode
+    @EnvironmentObject var userProfile: UserProfile
+
+    @State private var calories: String = ""
+    @State private var protein: String = ""
+    @State private var carbs: String = ""
+    @State private var fat: String = ""
+    @State private var water: String = ""
+    @State private var fiber: String = ""
+
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(spacing: 16) {
+                    Group {
+                        TextField("Calories", text: $calories)
+                        TextField("Protein (g)", text: $protein)
+                        TextField("Carbs (g)", text: $carbs)
+                        TextField("Fat (g)", text: $fat)
+                        TextField("Water (L)", text: $water)
+                        TextField("Fiber (g)", text: $fiber)
+                    }
+                    .keyboardType(.decimalPad)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+
+                    Button(action: saveEntry) {
+                        Text("Save")
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.green)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                    }
+                    .padding(.top, 10)
+                }
+                .padding()
+            }
+            .navigationTitle("Manual Nutrition Entry")
+            .navigationBarItems(trailing: Button("Cancel") {
+                presentationMode.wrappedValue.dismiss()
+            })
+            .onAppear {
+                calories = userProfile.caloriesConsumed ?? ""
+                protein = userProfile.proteinIntake ?? ""
+                carbs = userProfile.carbsIntake ?? ""
+                fat = userProfile.fatIntake ?? ""
+                water = userProfile.waterIntake ?? ""
+                fiber = userProfile.fiberIntake ?? ""
+            }
+        }
+    }
+
+    private func saveEntry() {
+        userProfile.caloriesConsumed = calories
+        userProfile.proteinIntake = protein
+        userProfile.carbsIntake = carbs
+        userProfile.fatIntake = fat
+        userProfile.waterIntake = water
+        userProfile.fiberIntake = fiber
+        userProfile.saveToFirestore()
+        presentationMode.wrappedValue.dismiss()
     }
 }
-
