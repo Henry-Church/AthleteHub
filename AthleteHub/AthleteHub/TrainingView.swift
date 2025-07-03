@@ -519,6 +519,7 @@ struct RecentWorkoutsCard: View {
         .padding()
         .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color.white)
         .cornerRadius(16)
+        .shadow(color: customYellow.opacity(0.4), radius: 8, x: 0, y: 4)
         .padding(.horizontal)
         .sheet(isPresented: $showingWorkoutDetail) {
             if let workout = selectedWorkout {
@@ -535,6 +536,51 @@ struct RecentWorkoutsCard: View {
         formatter.dateStyle = .short
         formatter.timeStyle = .short
         return formatter.string(from: date)
+    }
+}
+
+struct TrainingScoreTrendCard: View {
+    @ObservedObject var healthManager: HealthManager
+    @Environment(\.colorScheme) var colorScheme
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Overall Training – 7 Day Trends")
+                .font(.headline)
+                .foregroundColor(.primary)
+
+            if healthManager.lastSevenScoresFilled.allSatisfy({ $0.score == 0 }) {
+                Text("No training scores yet.")
+                    .foregroundColor(.secondary)
+            } else {
+                Chart(healthManager.lastSevenScoresFilled) { entry in
+                    LineMark(
+                        x: .value("Date", entry.date),
+                        y: .value("Score", entry.score)
+                    )
+                    .interpolationMethod(.linear)
+
+                    PointMark(
+                        x: .value("Date", entry.date),
+                        y: .value("Score", entry.score)
+                    )
+                }
+                .chartYScale(domain: 0...100)
+                .chartXAxis {
+                    AxisMarks(values: .stride(by: .day)) { value in
+                        AxisGridLine()
+                        AxisTick()
+                        AxisValueLabel(format: .dateTime.month().day(), centered: true)
+                    }
+                }
+                .frame(height: 200)
+            }
+        }
+        .padding()
+        .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color.white)
+        .cornerRadius(16)
+        .shadow(color: customYellow.opacity(0.4), radius: 8, x: 0, y: 4)
+        .padding(.horizontal)
     }
 }
 

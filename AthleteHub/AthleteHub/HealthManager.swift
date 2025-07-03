@@ -51,16 +51,17 @@ class HealthManager: ObservableObject {
             .filter { $0.date >= Calendar.current.startOfDay(for: start) }
             .sorted { $0.date < $1.date }
     }
-/// Last seven days including today, ensuring every day has a value
-var lastSevenScoresFilled: [TrainingScore] {
-    let calendar = Calendar.current
-    return (0..<7).map { offset in
-        let day = calendar.startOfDay(for: calendar.date(byAdding: .day, value: -6 + offset, to: Date())!)
-        let score = trainingScores.first { calendar.isDate($0.date, inSameDayAs: day) }?.score ?? 0
-        return TrainingScore(date: day, score: score)
+  
+    /// Last seven days including today, ensuring every day has a value
+    var lastSevenScoresFilled: [TrainingScore] {
+        let calendar = Calendar.current
+        return (0..<7).map { offset in
+            let day = calendar.startOfDay(for: calendar.date(byAdding: .day, value: -6 + offset, to: Date())!)
+            let score = trainingScores.first { calendar.isDate($0.date, inSameDayAs: day) }?.score ?? 0
+            return TrainingScore(date: day, score: score)
+        }
     }
-}
-
+  
     @Published var recentWorkouts: [HKWorkout] = []
     @Published var recoveryScore: Double? = nil
     @Published var stressLevel: Double? = nil
@@ -397,30 +398,6 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
 
     healthStore.execute(query)
 }
-
-
-    func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
-        let workoutType = HKObjectType.workoutType()
-        let startOfDay = Calendar.current.startOfDay(for: Date())
-        let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: Date(), options: .strictStartDate)
-
-        let query = HKSampleQuery(sampleType: workoutType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, error in
-            guard let workouts = samples as? [HKWorkout], error == nil else {
-                DispatchQueue.main.async { completion(nil) }
-                return
-            }
-
-            let meters = workouts.reduce(0.0) { $0 + ($1.totalDistance?.doubleValue(for: .meter()) ?? 0) }
-            let km = meters / 1000
-
-            DispatchQueue.main.async {
-                self.distance = km
-                completion(km)
-            }
-        }
-
-        healthStore.execute(query)
-    }
     
     func fetchWorkouts(completion: @escaping ([HKWorkout]) -> Void = { _ in }) {
         let workoutType = HKObjectType.workoutType()
