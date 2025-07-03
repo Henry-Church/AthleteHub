@@ -482,6 +482,12 @@ struct HRVChartCard: View {
                     .cornerRadius(12)
             }
         }
+        .padding()
+        .frame(maxWidth: .infinity)
+        .frame(height: 200)
+        .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
+        .cornerRadius(16)
+        .shadow(color: Color.purple.opacity(0.15), radius: 8, x: 0, y: 4)
     }
 }
 
