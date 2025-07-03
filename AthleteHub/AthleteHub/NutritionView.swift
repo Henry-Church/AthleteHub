@@ -1,6 +1,9 @@
-// NutritionView.swift
+
+
 
 import SwiftUI
+
+// MARK: - NutritionView
 
 struct NutritionView: View {
     @Environment(\.colorScheme) var colorScheme
@@ -8,6 +11,7 @@ struct NutritionView: View {
     @EnvironmentObject var healthManager: HealthManager
 
     @State private var showingSetGoals = false
+    @State private var showingManualEntry = false
     @State private var activeMetric: MetricType?
 
     private func percentage(from text: String?) -> Double? {
@@ -32,7 +36,7 @@ struct NutritionView: View {
 
     private func generateNutritionInsights() -> [String] {
         func message(for percent: Double, metric: String) -> String {
-            if percent >= 100 { return "\(metric) goal met." }
+            if percent >= 100 { return "\(metric.capitalized) goal met." }
             return "\(Int(percent))% of \(metric) goal."
         }
 
@@ -54,6 +58,7 @@ struct NutritionView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                // Header
                 HStack {
                     Text("Nutrition Dashboard")
                         .font(.title)
@@ -67,7 +72,12 @@ struct NutritionView: View {
                                 .background(Color.green.opacity(0.2))
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
-
+                        Button(action: { showingManualEntry = true }) {
+                            Image(systemName: "square.and.pencil")
+                                .padding(8)
+                                .background(Color.green.opacity(0.2))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
                     }
                 }
                 .padding(.horizontal)
@@ -78,66 +88,25 @@ struct NutritionView: View {
                 NutritionInsightsCard(insights: generateNutritionInsights(), colorScheme: colorScheme)
                     .padding(.horizontal)
 
-                // Metric Cards
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                    NutritionRingCard(
-                        title: "Calories",
-                        icon: "flame.fill",
-                        value: userProfile.caloriesConsumed ?? "0",
-                        goal: userProfile.caloriesGoal ?? "0 cal",
-                        percentage: userProfile.caloriesPercentage ?? "0%",
-                        ringColor: .orange,
-                        colorScheme: colorScheme,
-                        onTap: { activeMetric = .calories }
-                    )
+                    NutritionRingCard(title: "Calories", icon: "flame.fill", value: userProfile.caloriesConsumed ?? "0", goal: userProfile.caloriesGoal ?? "0 cal", percentage: userProfile.caloriesPercentage ?? "0%", ringColor: .orange, colorScheme: colorScheme, onTap: { activeMetric = .calories })
 
-                    NutritionRingCard(
-                        title: "Protein",
-                        icon: "bolt.fill",
-                        value: userProfile.proteinIntake ?? "0",
-                        goal: userProfile.proteinGoal ?? "0 g",
-                        percentage: userProfile.proteinPercentage ?? "0%",
-                        ringColor: .red,
-                        colorScheme: colorScheme,
-                        onTap: { activeMetric = .protein }
-                    )
+                    NutritionRingCard(title: "Protein", icon: "bolt.fill", value: userProfile.proteinIntake ?? "0", goal: userProfile.proteinGoal ?? "0 g", percentage: userProfile.proteinPercentage ?? "0%", ringColor: .red, colorScheme: colorScheme, onTap: { activeMetric = .protein })
 
-                    NutritionRingCard(
-                        title: "Carbs",
-                        icon: "leaf.fill",
-                        value: userProfile.carbsIntake ?? "0",
-                        goal: userProfile.carbsGoal ?? "0 g",
-                        percentage: userProfile.carbsPercentage ?? "0%",
-                        ringColor: .yellow,
-                        colorScheme: colorScheme,
-                        onTap: { activeMetric = .carbs }
-                    )
+                    NutritionRingCard(title: "Carbs", icon: "leaf.fill", value: userProfile.carbsIntake ?? "0", goal: userProfile.carbsGoal ?? "0 g", percentage: userProfile.carbsPercentage ?? "0%", ringColor: .yellow, colorScheme: colorScheme, onTap: { activeMetric = .carbs })
 
-                    NutritionRingCard(
-                        title: "Fat",
-                        icon: "chart.pie.fill",
-                        value: userProfile.fatIntake ?? "0",
-                        goal: userProfile.fatGoal ?? "0 g",
-                        percentage: userProfile.fatPercentage ?? "0%",
-                        ringColor: .purple,
-                        colorScheme: colorScheme,
-                        onTap: { activeMetric = .fat }
-                    )
+                    NutritionRingCard(title: "Fat", icon: "chart.pie.fill", value: userProfile.fatIntake ?? "0", goal: userProfile.fatGoal ?? "0 g", percentage: userProfile.fatPercentage ?? "0%", ringColor: .purple, colorScheme: colorScheme, onTap: { activeMetric = .fat })
                 }
                 .padding(.horizontal)
 
-                WaterIntakeCard(
-                    intake: userProfile.waterIntake ?? "0",
-                    goal: userProfile.waterGoal ?? "0 L",
-                    percentage: userProfile.waterPercentage ?? "0%",
-                    colorScheme: colorScheme,
-                    onTap: { activeMetric = .water }
-                )
-                .padding(.horizontal)
+                WaterIntakeCard(intake: userProfile.waterIntake ?? "0", goal: userProfile.waterGoal ?? "0 L", percentage: userProfile.waterPercentage ?? "0%", colorScheme: colorScheme, onTap: { activeMetric = .water })
+                    .padding(.horizontal)
 
                 NutritionChartCard(title: "7-Day Nutrition Trends", colorScheme: colorScheme) {
                     if userProfile.dailyIntakeTrendsAvailable {
-                        // Insert real chart here
+                        Text("Chart will go here")
+                            .frame(height: 150)
+                            .frame(maxWidth: .infinity)
                     } else {
                         Text("Data not available")
                             .foregroundColor(.secondary)
@@ -152,15 +121,20 @@ struct NutritionView: View {
         }
         .background(Color(UIColor.systemBackground).edgesIgnoringSafeArea(.all))
         .sheet(isPresented: $showingSetGoals) {
-            SetNutritionGoalsView()
-                .environmentObject(userProfile)
+            SetNutritionGoalsView().environmentObject(userProfile)
+        }
+        .sheet(isPresented: $showingManualEntry) {
+            ManualNutritionEntryView().environmentObject(userProfile)
         }
         .sheet(item: $activeMetric) { metric in
-            MetricDetailView(metric: metric)
-                .environmentObject(userProfile)
+            MetricDetailView(metric: metric).environmentObject(userProfile)
         }
     }
 }
+
+// The rest of the supporting views like NutritionRingCard, WaterIntakeCard, etc. will be appended below...
+
+// MARK: - NutritionRingCard
 
 struct NutritionRingCard: View {
     let title: String
@@ -216,15 +190,19 @@ struct NutritionRingCard: View {
         .frame(height: 180)
         .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
         .cornerRadius(16)
-        .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
+        .shadow(color: ringColor.opacity(0.3), radius: 8, x: 0, y: 4)
         .onAppear {
             withAnimation(.easeOut(duration: 1.0)) {
                 animatedProgress = progress
             }
         }
-        .onTapGesture { onTap() }
+        .onTapGesture {
+            onTap()
+        }
     }
 }
+
+// MARK: - WaterIntakeCard
 
 struct WaterIntakeCard: View {
     let intake: String
@@ -299,10 +277,13 @@ struct WaterIntakeCard: View {
                 animatedProgress = progress
             }
         }
-        .onTapGesture { onTap() }
+        .onTapGesture {
+            onTap()
+        }
     }
 }
 
+// MARK: - NutritionChartCard
 
 struct NutritionChartCard<Content: View>: View {
     let title: String
@@ -328,6 +309,8 @@ struct NutritionChartCard<Content: View>: View {
         .padding(.horizontal)
     }
 }
+
+// MARK: - Supporting Cards
 
 struct OverallNutritionScoreCard: View {
     let score: Int
@@ -408,60 +391,81 @@ struct NutritionInsightsCard: View {
     }
 }
 
-struct SetNutritionGoalsView: View {
-    @EnvironmentObject var userProfile: UserProfile
-    @Environment(\.presentationMode) var presentationMode
+// MARK: - Manual Entry
 
-    @State private var calorieGoal: String = ""
-    @State private var proteinGoal: String = ""
-    @State private var carbGoal: String = ""
-    @State private var fatGoal: String = ""
-    @State private var waterGoal: String = ""
-    @State private var fiberGoal: String = ""
+struct ManualNutritionEntryView: View {
+    @Environment(\.presentationMode) var presentationMode
+    @EnvironmentObject var userProfile: UserProfile
+
+    @State private var calories: String = ""
+    @State private var protein: String = ""
+    @State private var carbs: String = ""
+    @State private var fat: String = ""
+    @State private var water: String = ""
+    @State private var fiber: String = ""
 
     var body: some View {
         NavigationView {
-            Form {
-                Section(header: Text("Daily Goals")) {
-                    TextField("Calories", text: $calorieGoal)
-                        .keyboardType(.decimalPad)
-                    TextField("Protein (g)", text: $proteinGoal)
-                        .keyboardType(.decimalPad)
-                    TextField("Carbs (g)", text: $carbGoal)
-                        .keyboardType(.decimalPad)
-                    TextField("Fat (g)", text: $fatGoal)
-                        .keyboardType(.decimalPad)
-                    TextField("Water (L)", text: $waterGoal)
-                        .keyboardType(.decimalPad)
-                    TextField("Fiber (g)", text: $fiberGoal)
-                        .keyboardType(.decimalPad)
+            ScrollView {
+                VStack(spacing: 16) {
+                    Group {
+                        TextField("Calories", text: $calories)
+                        TextField("Protein (g)", text: $protein)
+                        TextField("Carbs (g)", text: $carbs)
+                        TextField("Fat (g)", text: $fat)
+                        TextField("Water (L)", text: $water)
+                        TextField("Fiber (g)", text: $fiber)
+                    }
+                    .keyboardType(.decimalPad)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+
+                    Button(action: saveEntry) {
+                        Text("Save")
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.green)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                    }
+                    .padding(.top, 10)
                 }
+                .padding()
             }
-            .navigationTitle("Set Nutrition Goals")
-            .navigationBarItems(trailing: Button("Save") {
-                userProfile.caloriesGoal = calorieGoal
-                userProfile.proteinGoal = proteinGoal
-                userProfile.carbsGoal = carbGoal
-                userProfile.fatGoal = fatGoal
-                userProfile.waterGoal = waterGoal
-                userProfile.fiberGoal = fiberGoal
-                userProfile.saveToFirestore()
+            .navigationTitle("Manual Nutrition Entry")
+            .navigationBarItems(trailing: Button("Cancel") {
                 presentationMode.wrappedValue.dismiss()
             })
             .onAppear {
-                calorieGoal = userProfile.caloriesGoal ?? ""
-                proteinGoal = userProfile.proteinGoal ?? ""
-                carbGoal = userProfile.carbsGoal ?? ""
-                fatGoal = userProfile.fatGoal ?? ""
-                waterGoal = userProfile.waterGoal ?? ""
-                fiberGoal = userProfile.fiberGoal ?? ""
+                calories = userProfile.caloriesConsumed ?? ""
+                protein = userProfile.proteinIntake ?? ""
+                carbs = userProfile.carbsIntake ?? ""
+                fat = userProfile.fatIntake ?? ""
+                water = userProfile.waterIntake ?? ""
+                fiber = userProfile.fiberIntake ?? ""
             }
         }
     }
+
+    private func saveEntry() {
+        userProfile.caloriesConsumed = calories
+        userProfile.proteinIntake = protein
+        userProfile.carbsIntake = carbs
+        userProfile.fatIntake = fat
+        userProfile.waterIntake = water
+        userProfile.fiberIntake = fiber
+        userProfile.saveToFirestore()
+        presentationMode.wrappedValue.dismiss()
+    }
 }
 
+// MARK: - MetricType Enum
+
 enum MetricType: String, Identifiable {
-    case calories, protein, carbs, fat, water
+    case calories
+    case protein
+    case carbs
+    case fat
+    case water
 
     var id: String { rawValue }
 
@@ -469,12 +473,14 @@ enum MetricType: String, Identifiable {
         switch self {
         case .calories: return "Calories"
         case .protein:  return "Protein"
-        case .carbs:    return "Carbs"
+        case .carbs:    return "Carbohydrates"
         case .fat:      return "Fat"
         case .water:    return "Water"
         }
     }
 }
+
+// MARK: - MetricDetailView
 
 struct MetricDetailView: View {
     let metric: MetricType
@@ -518,7 +524,7 @@ struct MetricDetailView: View {
         case .protein:
             return AnyView(NutritionRingCard(title: "Protein", icon: "bolt.fill", value: userProfile.proteinIntake ?? "0", goal: userProfile.proteinGoal ?? "0 g", percentage: userProfile.proteinPercentage ?? "0%", ringColor: .red, colorScheme: colorScheme))
         case .carbs:
-            return AnyView(NutritionRingCard(title: "Carbs", icon: "leaf.fill", value: userProfile.carbsIntake ?? "0", goal: userProfile.carbsGoal ?? "0 g", percentage: userProfile.carbsPercentage ?? "0%", ringColor: .yellow, colorScheme: colorScheme))
+            return AnyView(NutritionRingCard(title: "Carbohydrates", icon: "leaf.fill", value: userProfile.carbsIntake ?? "0", goal: userProfile.carbsGoal ?? "0 g", percentage: userProfile.carbsPercentage ?? "0%", ringColor: .yellow, colorScheme: colorScheme))
         case .fat:
             return AnyView(NutritionRingCard(title: "Fat", icon: "chart.pie.fill", value: userProfile.fatIntake ?? "0", goal: userProfile.fatGoal ?? "0 g", percentage: userProfile.fatPercentage ?? "0%", ringColor: .purple, colorScheme: colorScheme))
         case .water:
@@ -548,3 +554,50 @@ struct MetricDetailView: View {
     }
 }
 
+// MARK: - SetNutritionGoalsView
+
+struct SetNutritionGoalsView: View {
+    @EnvironmentObject var userProfile: UserProfile
+    @Environment(\.presentationMode) var presentationMode
+
+    @State private var calorieGoal: String = ""
+    @State private var proteinGoal: String = ""
+    @State private var carbGoal: String = ""
+    @State private var fatGoal: String = ""
+    @State private var waterGoal: String = ""
+    @State private var fiberGoal: String = ""
+
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("Daily Goals")) {
+                    TextField("Calories", text: $calorieGoal).keyboardType(.decimalPad)
+                    TextField("Protein (g)", text: $proteinGoal).keyboardType(.decimalPad)
+                    TextField("Carbs (g)", text: $carbGoal).keyboardType(.decimalPad)
+                    TextField("Fat (g)", text: $fatGoal).keyboardType(.decimalPad)
+                    TextField("Water (L)", text: $waterGoal).keyboardType(.decimalPad)
+                    TextField("Fiber (g)", text: $fiberGoal).keyboardType(.decimalPad)
+                }
+            }
+            .navigationTitle("Set Nutrition Goals")
+            .navigationBarItems(trailing: Button("Save") {
+                userProfile.caloriesGoal = calorieGoal
+                userProfile.proteinGoal = proteinGoal
+                userProfile.carbsGoal = carbGoal
+                userProfile.fatGoal = fatGoal
+                userProfile.waterGoal = waterGoal
+                userProfile.fiberGoal = fiberGoal
+                userProfile.saveToFirestore()
+                presentationMode.wrappedValue.dismiss()
+            })
+            .onAppear {
+                calorieGoal = userProfile.caloriesGoal ?? ""
+                proteinGoal = userProfile.proteinGoal ?? ""
+                carbGoal = userProfile.carbsGoal ?? ""
+                fatGoal = userProfile.fatGoal ?? ""
+                waterGoal = userProfile.waterGoal ?? ""
+                fiberGoal = userProfile.fiberGoal ?? ""
+            }
+        }
+    }
+}
