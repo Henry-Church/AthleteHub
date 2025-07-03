@@ -16,6 +16,7 @@ struct TrainingView: View {
     let customYellow = Color(red: 1.0, green: 0.84, blue: 0.2)
 
     var body: some View {
+        let backgroundColor = colorScheme == .dark ? customYellow.opacity(0.1) : Color(.systemGray6)
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 HStack {
@@ -131,7 +132,7 @@ struct TrainingView: View {
             }
             .padding(.vertical)
         }
-        .background(customYellow.opacity(0.1).edgesIgnoringSafeArea(.all))
+        .background(backgroundColor.edgesIgnoringSafeArea(.all))
         .sheet(isPresented: $showingSetGoals) {
             SetGoalsView().environmentObject(healthManager)
         }
@@ -328,18 +329,18 @@ struct OverallTrainingScoreCard: View {
 
     var body: some View {
         HStack {
-            Image(systemName: "star.fill")
+            Image(systemName: "figure.run")
                 .font(.largeTitle)
-                .foregroundColor(.white)
+                .foregroundColor(.black)
 
             VStack(alignment: .leading) {
                 Text("Overall Training Score")
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(.black)
 
                 Text("\(score)")
                     .font(.system(size: 48, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(.black)
             }
 
             Spacer()
@@ -349,11 +350,11 @@ struct OverallTrainingScoreCard: View {
                 .fontWeight(.bold)
                 .padding(8)
                 .background(statusColor)
-                .foregroundColor(.white)
+                .foregroundColor(.black)
                 .cornerRadius(12)
         }
         .padding()
-        .background(Color.black)
+        .background(Color.yellow)
         .cornerRadius(20)
     }
 }
@@ -509,11 +510,11 @@ struct RecentWorkoutsCard: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Recent Workouts")
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundColor(.primary)
 
             if healthManager.recentWorkouts.isEmpty {
                 Text("Data not available")
-                    .foregroundColor(.gray)
+                    .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 20)
             } else {
@@ -529,28 +530,28 @@ struct RecentWorkoutsCard: View {
                             VStack(alignment: .leading) {
                                 Text(workout.workoutActivityType.name)
                                     .font(.subheadline)
-                                    .foregroundColor(.white)
+                                    .foregroundColor(.primary)
 
                                 Text(formattedDateTime(workout.startDate))
                                     .font(.caption)
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(.secondary)
                             }
 
                             Spacer()
 
                             Image(systemName: "chevron.right")
-                                .foregroundColor(.gray)
+                                .foregroundColor(.secondary)
                         }
                         .padding(.vertical, 4)
                     }
 
-                    Divider().background(Color.white.opacity(0.2))
+                    Divider().background(Color.primary.opacity(0.2))
                 }
 
             }
         }
         .padding()
-        .background(Color(.secondarySystemBackground))
+        .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color.white)
         .cornerRadius(16)
         .padding(.horizontal)
         .sheet(isPresented: $showingWorkoutDetail) {
