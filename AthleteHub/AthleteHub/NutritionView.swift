@@ -87,7 +87,7 @@ struct NutritionView: View {
                 NutritionInsightsCard(insights: generateNutritionInsights(), colorScheme: colorScheme)
                     .padding(.horizontal)
 
-                // Metric Cards
+                // Macronutrient and Water Cards
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
                     NutritionRingCard(
                         title: "Calories",
@@ -147,7 +147,7 @@ struct NutritionView: View {
                 // Trends
                 NutritionChartCard(title: "7-Day Nutrition Trends", colorScheme: colorScheme) {
                     if userProfile.dailyIntakeTrendsAvailable {
-                        // TODO: Insert actual chart view
+                        // TODO: Replace with real chart when ready
                     } else {
                         Text("Data not available")
                             .foregroundColor(.secondary)
@@ -160,13 +160,9 @@ struct NutritionView: View {
             }
             .padding(.vertical)
         }
-        .background(Color.white.edgesIgnoringSafeArea(.all))
+        .background(Color(UIColor.systemBackground).edgesIgnoringSafeArea(.all))
         .sheet(isPresented: $showingSetGoals) {
             SetNutritionGoalsView()
-                .environmentObject(userProfile)
-        }
-        .sheet(isPresented: $showingManualEntry) {
-            ManualNutritionEntryView()
                 .environmentObject(userProfile)
         }
         .sheet(item: $activeMetric) { metric in
@@ -176,7 +172,6 @@ struct NutritionView: View {
     }
 }
 
-import SwiftUI
 
 struct NutritionRingCard: View {
     let title: String
@@ -233,7 +228,11 @@ struct NutritionRingCard: View {
         .padding()
         .frame(maxWidth: .infinity)
         .frame(height: 180)
-        .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
+        .background(
+            colorScheme == .dark
+                ? Color(.secondarySystemBackground)
+                : Color(.systemBackground)
+        )
         .cornerRadius(16)
         .shadow(color: ringColor.opacity(0.3), radius: 8, x: 0, y: 4)
         .onAppear {
@@ -247,8 +246,6 @@ struct NutritionRingCard: View {
     }
 }
 
-
-import SwiftUI
 
 struct WaterIntakeCard: View {
     let intake: String
@@ -273,23 +270,34 @@ struct WaterIntakeCard: View {
                 Spacer()
             }
 
-            ZStack(alignment: .bottom) {
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(Color.blue.opacity(0.2))
-                    .frame(width: 40, height: 100)
+            ZStack {
+                Circle()
+                    .stroke(Color.blue.opacity(0.2), lineWidth: 12)
+                    .frame(width: 120, height: 120)
 
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(Color.blue)
-                    .frame(width: 40, height: CGFloat(animatedProgress) * 100)
+                Circle()
+                    .trim(from: 0, to: CGFloat(animatedProgress))
+                    .stroke(Color.blue, style: StrokeStyle(lineWidth: 12, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .frame(width: 120, height: 120)
+
+                VStack(spacing: 4) {
+                    Image(systemName: "drop.fill")
+                        .font(.title)
+                        .foregroundColor(.blue)
+                    Text(goal)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
             }
 
-            Text("\(intake) / \(goal)")
+            Text("\(intake) consumed")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
         .padding()
         .frame(maxWidth: .infinity)
-        .frame(height: 180)
+        .frame(height: 200)
         .background(
             colorScheme == .dark
             ? Color(.secondarySystemBackground)
@@ -485,6 +493,7 @@ enum MetricType: String, Identifiable {
     }
 }
 
+
 struct MetricDetailView: View {
     let metric: MetricType
     @EnvironmentObject var userProfile: UserProfile
@@ -556,10 +565,6 @@ struct MetricDetailView: View {
         userProfile.saveToFirestore()
 
 
-
-
-import SwiftUI
-
 struct ManualNutritionEntryView: View {
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var userProfile: UserProfile
@@ -624,5 +629,3 @@ struct ManualNutritionEntryView: View {
         presentationMode.wrappedValue.dismiss()
     }
 }
-
-
