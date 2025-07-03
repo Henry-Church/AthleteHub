@@ -89,13 +89,13 @@ struct NutritionView: View {
                     .padding(.horizontal)
 
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                    NutritionRingCard(title: "Calories", icon: "flame.fill", value: userProfile.caloriesConsumed ?? "0", goal: userProfile.caloriesGoal ?? "0 cal", percentage: userProfile.caloriesPercentage ?? "0%", ringColor: .orange, colorScheme: colorScheme, onTap: { activeMetric = .calories })
+                    NutritionRingCard(title: "Calories", icon: "flame.fill", value: userProfile.caloriesConsumed ?? "0", goal: userProfile.caloriesGoal ?? "0 cal", percentage: userProfile.caloriesPercentage ?? "0%", colorScheme: colorScheme, onTap: { activeMetric = .calories })
 
-                    NutritionRingCard(title: "Protein", icon: "bolt.fill", value: userProfile.proteinIntake ?? "0", goal: userProfile.proteinGoal ?? "0 g", percentage: userProfile.proteinPercentage ?? "0%", ringColor: .red, colorScheme: colorScheme, onTap: { activeMetric = .protein })
+                    NutritionRingCard(title: "Protein", icon: "bolt.fill", value: userProfile.proteinIntake ?? "0", goal: userProfile.proteinGoal ?? "0 g", percentage: userProfile.proteinPercentage ?? "0%", colorScheme: colorScheme, onTap: { activeMetric = .protein })
 
-                    NutritionRingCard(title: "Carbs", icon: "leaf.fill", value: userProfile.carbsIntake ?? "0", goal: userProfile.carbsGoal ?? "0 g", percentage: userProfile.carbsPercentage ?? "0%", ringColor: .yellow, colorScheme: colorScheme, onTap: { activeMetric = .carbs })
+                    NutritionRingCard(title: "Carbs", icon: "leaf.fill", value: userProfile.carbsIntake ?? "0", goal: userProfile.carbsGoal ?? "0 g", percentage: userProfile.carbsPercentage ?? "0%", colorScheme: colorScheme, onTap: { activeMetric = .carbs })
 
-                    NutritionRingCard(title: "Fat", icon: "chart.pie.fill", value: userProfile.fatIntake ?? "0", goal: userProfile.fatGoal ?? "0 g", percentage: userProfile.fatPercentage ?? "0%", ringColor: .purple, colorScheme: colorScheme, onTap: { activeMetric = .fat })
+                    NutritionRingCard(title: "Fat", icon: "chart.pie.fill", value: userProfile.fatIntake ?? "0", goal: userProfile.fatGoal ?? "0 g", percentage: userProfile.fatPercentage ?? "0%", colorScheme: colorScheme, onTap: { activeMetric = .fat })
                 }
                 .padding(.horizontal)
 
@@ -142,7 +142,6 @@ struct NutritionRingCard: View {
     let value: String
     let goal: String
     let percentage: String
-    let ringColor: Color
     let colorScheme: ColorScheme
     var onTap: () -> Void = {}
 
@@ -150,6 +149,17 @@ struct NutritionRingCard: View {
 
     private var progress: Double {
         (Double(percentage.replacingOccurrences(of: "%", with: "")) ?? 0) / 100.0
+    }
+
+    private var ringColor: Color {
+        switch progress {
+        case ..<0.5:
+            return .red
+        case ..<0.8:
+            return .yellow
+        default:
+            return .green
+        }
     }
 
     var body: some View {
@@ -175,6 +185,7 @@ struct NutritionRingCard: View {
                     Text(value)
                         .font(.title2)
                         .fontWeight(.bold)
+                        .foregroundColor(ringColor)
                     Text("/\(goal)")
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -239,19 +250,20 @@ struct WaterIntakeCard: View {
 
             ZStack {
                 Circle()
-                    .stroke(Color.gray.opacity(0.2), lineWidth: 12)
-                    .frame(width: 120, height: 120)
+                    .stroke(Color.gray.opacity(0.2), lineWidth: 10)
+                    .frame(width: 100, height: 100)
 
                 Circle()
                     .trim(from: 0, to: CGFloat(animatedProgress))
-                    .stroke(Color.blue, style: StrokeStyle(lineWidth: 12, lineCap: .round))
+                    .stroke(Color.blue, style: StrokeStyle(lineWidth: 10, lineCap: .round))
                     .rotationEffect(.degrees(-90))
-                    .frame(width: 120, height: 120)
+                    .frame(width: 100, height: 100)
 
                 VStack(spacing: 4) {
                     Text(String(format: "%.1f L", numericIntake))
                         .font(.title2)
                         .fontWeight(.bold)
+                        .foregroundColor(.blue)
                     Text(String(format: "/%.1f L", numericGoal))
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -268,7 +280,7 @@ struct WaterIntakeCard: View {
         }
         .padding()
         .frame(maxWidth: .infinity)
-        .frame(height: 220)
+        .frame(height: 180)
         .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
         .cornerRadius(16)
         .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
@@ -494,7 +506,7 @@ struct MetricDetailView: View {
         NavigationView {
             VStack(spacing: 20) {
                 metricCard
-                    .frame(height: 220)
+                    .frame(height: 180)
 
                 TextField("Enter \(metric.title)", text: $value)
                     .keyboardType(.decimalPad)
@@ -520,13 +532,13 @@ struct MetricDetailView: View {
     private var metricCard: some View {
         switch metric {
         case .calories:
-            return AnyView(NutritionRingCard(title: "Calories", icon: "flame.fill", value: userProfile.caloriesConsumed ?? "0", goal: userProfile.caloriesGoal ?? "0 cal", percentage: userProfile.caloriesPercentage ?? "0%", ringColor: .orange, colorScheme: colorScheme))
+            return AnyView(NutritionRingCard(title: "Calories", icon: "flame.fill", value: userProfile.caloriesConsumed ?? "0", goal: userProfile.caloriesGoal ?? "0 cal", percentage: userProfile.caloriesPercentage ?? "0%", colorScheme: colorScheme))
         case .protein:
-            return AnyView(NutritionRingCard(title: "Protein", icon: "bolt.fill", value: userProfile.proteinIntake ?? "0", goal: userProfile.proteinGoal ?? "0 g", percentage: userProfile.proteinPercentage ?? "0%", ringColor: .red, colorScheme: colorScheme))
+            return AnyView(NutritionRingCard(title: "Protein", icon: "bolt.fill", value: userProfile.proteinIntake ?? "0", goal: userProfile.proteinGoal ?? "0 g", percentage: userProfile.proteinPercentage ?? "0%", colorScheme: colorScheme))
         case .carbs:
-            return AnyView(NutritionRingCard(title: "Carbohydrates", icon: "leaf.fill", value: userProfile.carbsIntake ?? "0", goal: userProfile.carbsGoal ?? "0 g", percentage: userProfile.carbsPercentage ?? "0%", ringColor: .yellow, colorScheme: colorScheme))
+            return AnyView(NutritionRingCard(title: "Carbohydrates", icon: "leaf.fill", value: userProfile.carbsIntake ?? "0", goal: userProfile.carbsGoal ?? "0 g", percentage: userProfile.carbsPercentage ?? "0%", colorScheme: colorScheme))
         case .fat:
-            return AnyView(NutritionRingCard(title: "Fat", icon: "chart.pie.fill", value: userProfile.fatIntake ?? "0", goal: userProfile.fatGoal ?? "0 g", percentage: userProfile.fatPercentage ?? "0%", ringColor: .purple, colorScheme: colorScheme))
+            return AnyView(NutritionRingCard(title: "Fat", icon: "chart.pie.fill", value: userProfile.fatIntake ?? "0", goal: userProfile.fatGoal ?? "0 g", percentage: userProfile.fatPercentage ?? "0%", colorScheme: colorScheme))
         case .water:
             return AnyView(WaterIntakeCard(intake: userProfile.waterIntake ?? "0", goal: userProfile.waterGoal ?? "0 L", percentage: userProfile.waterPercentage ?? "0%", colorScheme: colorScheme))
         }
