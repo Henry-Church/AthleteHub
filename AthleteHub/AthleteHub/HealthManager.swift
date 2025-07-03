@@ -44,6 +44,22 @@ class HealthManager: ObservableObject {
     @Published var height: Double?
     @Published var dailyGoals: [String: Double] = [:]
     @Published var trainingScores: [TrainingScore] = []
+    /// Scores for the last seven days including today, sorted by date
+    var lastSevenScores: [TrainingScore] {
+        let start = Calendar.current.date(byAdding: .day, value: -6, to: Date()) ?? Date()
+        return trainingScores
+            .filter { $0.date >= Calendar.current.startOfDay(for: start) }
+            .sorted { $0.date < $1.date }
+    }
+    /// Last seven days including today, ensuring every day has a value
+    var lastSevenScoresFilled: [TrainingScore] {
+        let calendar = Calendar.current
+        return (0..<7).map { offset in
+            let day = calendar.startOfDay(for: calendar.date(byAdding: .day, value: -6 + offset, to: Date())!)
+            let score = trainingScores.first { calendar.isDate($0.date, inSameDayAs: day) }?.score ?? 0
+            return TrainingScore(date: day, score: score)
+        }
+    }
     @Published var recentWorkouts: [HKWorkout] = []
     @Published var recoveryScore: Double? = nil
     @Published var stressLevel: Double? = nil
@@ -123,7 +139,7 @@ class HealthManager: ObservableObject {
         fetchTotalCalories { _ in self.save() }
         fetchWeeklyDistance { _ in }
         fetchWeeklyHours { _ in }
-        fetchDailyDistance { _ in self.save() }
+        fetchWorkoutDistance { _ in self.save() }
         fetchWorkoutDuration { _ in self.save() }
         fetchRestingHeartRate { _ in self.save() }
         fetchHRV { _ in self.save() }
@@ -172,6 +188,7 @@ class HealthManager: ObservableObject {
                     print("❌ Error saving daily metrics: \(error.localizedDescription)")
                 } else {
                     print("✅ Saved metrics for \(dateString)")
+                    self.updateDailyTrainingScore(Int(self.calculateOverallTrainingScore()))
                 }
             }
     }
@@ -341,12 +358,36 @@ class HealthManager: ObservableObject {
         let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: Date(), options: .strictStartDate)
 
         let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, _ in
-            let km = result?.sumQuantity()?.doubleValue(for: .meter()) ?? 0 / 1000
+            let meters = result?.sumQuantity()?.doubleValue(for: .meter()) ?? 0
+            let km = meters / 1000
             DispatchQueue.main.async {
                 self.distance = km
                 completion(km)
             }
         }
+        healthStore.execute(query)
+    }
+
+    func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
+        let workoutType = HKObjectType.workoutType()
+        let startOfDay = Calendar.current.startOfDay(for: Date())
+        let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: Date(), options: .strictStartDate)
+
+        let query = HKSampleQuery(sampleType: workoutType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, error in
+            guard let workouts = samples as? [HKWorkout], error == nil else {
+                DispatchQueue.main.async { completion(nil) }
+                return
+            }
+
+            let meters = workouts.reduce(0.0) { $0 + ($1.totalDistance?.doubleValue(for: .meter()) ?? 0) }
+            let km = meters / 1000
+
+            DispatchQueue.main.async {
+                self.distance = km
+                completion(km)
+            }
+        }
+
         healthStore.execute(query)
     }
     
@@ -639,17 +680,51 @@ class HealthManager: ObservableObject {
             .setData(from: newScore)
     }
 
+    func updateDailyTrainingScore(_ score: Int) {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        let calendar = Calendar.current
+        if let existing = trainingScores.first(where: { calendar.isDate($0.date, inSameDayAs: Date()) }) {
+            try? db.collection("users")
+                .document(uid)
+                .collection("trainingScores")
+                .document(existing.id)
+                .setData(["date": existing.date, "score": score], merge: true)
+        } else {
+            addTrainingScore(score)
+        }
+    }
+
     func fetchTrainingScores() {
         guard let uid = Auth.auth().currentUser?.uid else { return }
+
+        let startDate = Calendar.current.date(byAdding: .day, value: -6, to: Date()) ?? Date()
+        let startString = dateFormatter.string(from: startDate)
+
         db.collection("users")
             .document(uid)
-            .collection("trainingScores")
+            .collection("dailyMetrics")
+            .whereField("date", isGreaterThanOrEqualTo: startString)
             .order(by: "date", descending: false)
-            .limit(toLast: 7)
             .addSnapshotListener { snapshot, _ in
                 guard let docs = snapshot?.documents else { return }
-                self.trainingScores = docs.compactMap {
-                    try? $0.data(as: TrainingScore.self)
+                self.trainingScores = docs.compactMap { doc in
+                    let data = doc.data()
+                    guard let dateStr = data["date"] as? String,
+                          let scoreAny = data["trainingScore"],
+                          let date = self.dateFormatter.date(from: dateStr) else {
+                        return nil
+                    }
+
+                    let score: Int
+                    if let s = scoreAny as? Int {
+                        score = s
+                    } else if let d = scoreAny as? Double {
+                        score = Int(d)
+                    } else {
+                        score = 0
+                    }
+
+                    return TrainingScore(id: doc.documentID, date: date, score: score)
                 }
             }
     }
