@@ -151,7 +151,7 @@ struct NutritionRingCard: View {
         (Double(percentage.replacingOccurrences(of: "%", with: "")) ?? 0) / 100.0
     }
 
-   private var ringColor: Color {
+private var ringColor: Color {
     switch progress {
     case ..<0.5:
         return .red
@@ -185,6 +185,7 @@ struct NutritionRingCard: View {
                     Text(value)
                         .font(.title2)
                         .fontWeight(.bold)
+                        .foregroundColor(ringColor)
                     Text("/\(goal)")
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -249,19 +250,20 @@ struct WaterIntakeCard: View {
 
             ZStack {
                 Circle()
-                    .stroke(Color.gray.opacity(0.2), lineWidth: 12)
-                    .frame(width: 120, height: 120)
+                    .stroke(Color.gray.opacity(0.2), lineWidth: 10)
+                    .frame(width: 100, height: 100)
 
                 Circle()
                     .trim(from: 0, to: CGFloat(animatedProgress))
-                    .stroke(Color.blue, style: StrokeStyle(lineWidth: 12, lineCap: .round))
+                    .stroke(Color.blue, style: StrokeStyle(lineWidth: 10, lineCap: .round))
                     .rotationEffect(.degrees(-90))
-                    .frame(width: 120, height: 120)
+                    .frame(width: 100, height: 100)
 
                 VStack(spacing: 4) {
                     Text(String(format: "%.1f L", numericIntake))
                         .font(.title2)
                         .fontWeight(.bold)
+                        .foregroundColor(.blue)
                     Text(String(format: "/%.1f L", numericGoal))
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -278,7 +280,7 @@ struct WaterIntakeCard: View {
         }
         .padding()
         .frame(maxWidth: .infinity)
-        .frame(height: 220)
+        .frame(height: 180)
         .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
         .cornerRadius(16)
         .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
@@ -504,7 +506,7 @@ struct MetricDetailView: View {
         NavigationView {
             VStack(spacing: 20) {
                 metricCard
-                    .frame(height: 220)
+                    .frame(height: 180)
 
                 TextField("Enter \(metric.title)", text: $value)
                     .keyboardType(.decimalPad)
