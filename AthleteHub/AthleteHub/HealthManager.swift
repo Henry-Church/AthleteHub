@@ -341,7 +341,8 @@ class HealthManager: ObservableObject {
         let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: Date(), options: .strictStartDate)
 
         let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, _ in
-            let km = result?.sumQuantity()?.doubleValue(for: .meter()) ?? 0 / 1000
+            let meters = result?.sumQuantity()?.doubleValue(for: .meter()) ?? 0
+            let km = meters / 1000
             DispatchQueue.main.async {
                 self.distance = km
                 completion(km)
