@@ -140,8 +140,7 @@ struct RecoveryView: View {
                 .padding(.horizontal)
 
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                    ForEach(Array(recoveryCards.enumerated()), id: \.
-offset) { _, view in
+                    ForEach(Array(recoveryCards.enumerated()), id: \.offset) { _, view in
                         view
                     }
                 }
@@ -241,10 +240,12 @@ private var cardBackground: Color {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack {
+            VStack(alignment: .leading, spacing: 4) {
                 Label(title, systemImage: "bed.double.fill")
                     .font(.headline)
-                Spacer()
+                    .lineLimit(1)
+                    .layoutPriority(1)
+
                 Text(value)
                     .font(.title3)
                     .fontWeight(.bold)
@@ -278,7 +279,7 @@ private var cardBackground: Color {
         }
         .padding()
         .frame(maxWidth: .infinity)
-        .frame(height: 180)
+        .frame(minHeight: 222)
         .background(cardBackground)
         .cornerRadius(16)
         .shadow(color: Color.purple.opacity(0.3), radius: 8, x: 0, y: 4)
@@ -415,7 +416,7 @@ struct RecoveryHRVCard: View {
             }
 
             if let goal = goal {
-                Text("Goal: \(Int(goal)) ms")
+                Text("Baseline: \(Int(goal)) ms")
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
@@ -424,7 +425,7 @@ struct RecoveryHRVCard: View {
         }
         .padding()
         .frame(maxWidth: .infinity)
-        .frame(height: 180)
+        .frame(minHeight: 222)
         .background(cardBackground)
         .cornerRadius(16)
         .shadow(color: Color.purple.opacity(0.3), radius: 8, x: 0, y: 4)
@@ -561,7 +562,7 @@ struct SleepQualityCard: View {
         }
         .padding()
         .frame(maxWidth: .infinity)
-        .frame(height: 180)
+        .frame(minHeight: 222, alignment: .top)
         .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
         .cornerRadius(16)
         .shadow(color: Color.purple.opacity(0.3), radius: 8, x: 0, y: 4)
@@ -636,7 +637,7 @@ struct RestingHRScoreCard: View {
         }
         .padding()
         .frame(maxWidth: .infinity)
-        .frame(height: 180)
+        .frame(minHeight: 222,alignment: .top)
         .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
         .cornerRadius(16)
         .shadow(color: Color.purple.opacity(0.3), radius: 8, x: 0, y: 4)
