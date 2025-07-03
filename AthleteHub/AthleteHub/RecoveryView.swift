@@ -100,13 +100,6 @@ struct RecoveryView: View {
                     colorScheme: colorScheme
                 )
             ),
-            AnyView(
-                HRVChartCard(
-                    values: healthManager.hrvWeek,
-                    colorScheme: colorScheme
-                )
-                .gridCellColumns(2)
-            )
         ]
     }
 
@@ -164,6 +157,11 @@ struct RecoveryView: View {
                             .cornerRadius(12)
                     }
                 }
+
+                HRVChartCard(
+                    values: healthManager.hrvWeek,
+                    colorScheme: colorScheme
+                )
 
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
                     ForEach(Array(recoveryCards.enumerated()), id: \.offset) { _, view in
@@ -459,10 +457,7 @@ struct HRVChartCard: View {
     let colorScheme: ColorScheme
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("HRV Avg (7d)")
-                .font(.headline)
-
+        RecoveryChartCard(title: "HRV Avg (7d)", colorScheme: colorScheme) {
             if #available(iOS 16.0, *) {
                 Chart {
                     ForEach(values.indices, id: \.self) { i in
@@ -481,9 +476,11 @@ struct HRVChartCard: View {
             } else {
                 Text("Available on iOS 16+")
                     .foregroundColor(.secondary)
+                    .frame(height: 150)
+                    .frame(maxWidth: .infinity)
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(12)
             }
-
-            Spacer()
         }
         .padding()
         .frame(maxWidth: .infinity)
