@@ -321,7 +321,7 @@ struct ProfileInfoBox: View {
         .frame(width: 80, height: 80)
         .background(colorScheme == .dark ? Color(.systemGray5) : Color.white)
         .cornerRadius(20)
-        .shadow(color: shadowColor.opacity(0.2), radius: 8, x: 0, y: 4)
+        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
     }
 }
 
@@ -356,6 +356,6 @@ struct ProfileOptionRow: View {
         .padding()
         .background(colorScheme == .dark ? Color(.systemGray6) : Color.white)
         .cornerRadius(12)
-        .shadow(color: shadowColor.opacity(0.2), radius: 8, x: 0, y: 4)
+        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
     }
 }

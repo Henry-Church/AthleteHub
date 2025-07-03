@@ -265,7 +265,7 @@ struct TrainingMetricCard: View {
         .padding()
         .background(colorScheme == .dark ? Color(.systemGray6) : Color.white)
         .cornerRadius(12)
-        .shadow(color: shadowColor.opacity(0.4), radius: 8, x: 0, y: 4)
+        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
     }
 }
 
@@ -520,7 +520,7 @@ struct RecentWorkoutsCard: View {
         .padding()
         .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color.white)
         .cornerRadius(16)
-        .shadow(color: customYellow.opacity(0.4), radius: 8, x: 0, y: 4)
+        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
         .padding(.horizontal)
         .sheet(isPresented: $showingWorkoutDetail) {
             if let workout = selectedWorkout {
@@ -581,7 +581,7 @@ struct TrainingScoreTrendCard: View {
         .padding()
         .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color.white)
         .cornerRadius(16)
-        .shadow(color: customYellow.opacity(0.4), radius: 8, x: 0, y: 4)
+        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
         .padding(.horizontal)
     }
 }

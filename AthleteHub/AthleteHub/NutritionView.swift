@@ -151,7 +151,7 @@ struct NutritionMetricCard: View {
         .padding()
         .background(colorScheme == .dark ? Color(.systemGray6) : Color.white)
         .cornerRadius(12)
-        .shadow(color: Color.green.opacity(0.4), radius: 8, x: 0, y: 4)
+        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
     }
 }
 
@@ -175,7 +175,7 @@ struct NutritionChartCard<Content: View>: View {
         .padding()
         .background(colorScheme == .dark ? Color(.systemGray6) : Color.white)
         .cornerRadius(12)
-        .shadow(color: Color.green.opacity(0.4), radius: 8, x: 0, y: 4)
+        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
         .padding(.horizontal)
     }
 }

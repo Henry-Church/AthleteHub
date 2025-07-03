@@ -109,7 +109,7 @@ struct DashboardView: View {
                             .frame(maxWidth: .infinity)
                             .background(sectionBackground)
                             .cornerRadius(12)
-                            .shadow(color: Color.black.opacity(0.15), radius: 12, x: 0, y: 6)
+                            .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
                             .padding(.horizontal)
                         } else {
                             ForEach(userProfile.trainingLog, id: \.self) { session in
@@ -121,7 +121,7 @@ struct DashboardView: View {
                                 .padding()
                                 .background(cardBackground)
                                 .cornerRadius(8)
-                                .shadow(color: Color.black.opacity(0.1), radius: 6, x: 0, y: 4)
+                                .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
                                 .padding(.horizontal)
                             }
                         }
@@ -180,7 +180,7 @@ struct DashboardMetricCard: View {
         .frame(height: 120)
         .background(cardBackground)
         .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.15), radius: 12, x: 0, y: 6)
+        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
     }
 }
 
@@ -203,6 +203,6 @@ struct StatCard: View {
         .frame(maxWidth: .infinity)
         .background(cardBackground)
         .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
+        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
     }
 }
