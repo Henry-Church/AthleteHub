@@ -477,7 +477,7 @@ struct HRVChartCard: View {
                     }
                 }
                 .chartYScale(domain: 0...(values.max() ?? 1))
-                .frame(height: 120)
+                .frame(height: 140)
             } else {
                 Text("Available on iOS 16+")
                     .foregroundColor(.secondary)
@@ -487,7 +487,7 @@ struct HRVChartCard: View {
         }
         .padding()
         .frame(maxWidth: .infinity)
-        .frame(height: 180)
+        .frame(height: 200)
         .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
         .cornerRadius(16)
         .shadow(color: Color.purple.opacity(0.15), radius: 8, x: 0, y: 4)
