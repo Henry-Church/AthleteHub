@@ -151,16 +151,16 @@ struct NutritionRingCard: View {
         (Double(percentage.replacingOccurrences(of: "%", with: "")) ?? 0) / 100.0
     }
 
-    private var ringColor: Color {
-        switch progress {
-        case ..<0.5:
-            return .red
-        case ..<0.8:
-            return .yellow
-        default:
-            return .green
-        }
+   private var ringColor: Color {
+    switch progress {
+    case ..<0.5:
+        return .red
+    case ..<0.75:
+        return .yellow
+    default:
+        return .green
     }
+}
 
     var body: some View {
         VStack(spacing: 16) {
