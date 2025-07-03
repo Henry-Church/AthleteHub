@@ -85,11 +85,9 @@ struct RecoveryView: View {
             )
         ),
         AnyView(
-            RecoveryMetricCard(
-                title: "Today's HRV",
-                actual: healthManager.hrv ?? 0,
+            RecoveryHRVCard(
+                hrv: healthManager.hrv ?? 0,
                 goal: 80,
-                unit: "ms",
                 colorScheme: colorScheme
             )
         ),
@@ -230,29 +228,52 @@ private var cardBackground: Color {
         filteredStages.reduce(0) { $0 + $1.endDate.timeIntervalSince($1.startDate) }
     }
 
+    private let stageOrder = ["Awake", "REM Sleep", "Light Sleep", "Deep Sleep"]
+
+    private var stageInfo: [(name: String, minutes: Double)] {
+        stageOrder.compactMap { stage in
+            let mins = filteredStages
+                .filter { $0.stage == stage }
+                .reduce(0) { $0 + $1.duration }
+            return mins > 0 ? (stage, mins) : nil
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Label(title, systemImage: "bed.double.fill")
                     .font(.headline)
                 Spacer()
+                Text(value)
+                    .font(.title3)
+                    .fontWeight(.bold)
             }
-
-            Text(value)
-                .font(.caption)
-                .foregroundColor(.secondary)
 
             GeometryReader { geometry in
                 HStack(spacing: 0) {
                     ForEach(filteredStages.sorted(by: { $0.startDate < $1.startDate })) { stage in
                         Rectangle()
                             .fill(stageColor(for: stage.stage))
-                            .frame(width: barWidth(for: stage, totalWidth: geometry.size.width), height: 8)
+                            .frame(width: barWidth(for: stage, totalWidth: geometry.size.width), height: 10)
                     }
                 }
                 .cornerRadius(4)
             }
-            .frame(height: 8)
+            .frame(height: 10)
+
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(stageInfo, id: \.name) { info in
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(stageColor(for: info.name))
+                            .frame(width: 8, height: 8)
+                        Text("\(info.name): \(formattedDuration(minutes: info.minutes))")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
             Spacer()
         }
         .padding()
@@ -281,6 +302,16 @@ private var cardBackground: Color {
             return Color.blue
         default:
             return Color.gray
+        }
+    }
+
+    private func formattedDuration(minutes: Double) -> String {
+        let hrs = Int(minutes) / 60
+        let mins = Int(minutes) % 60
+        if hrs > 0 {
+            return "\(hrs)h \(mins)m"
+        } else {
+            return "\(mins)m"
         }
     }
 }
@@ -335,6 +366,73 @@ struct RecoveryMetricCard: View {
         .background(cardBackground)
         .cornerRadius(16)
         .shadow(color: Color.purple.opacity(0.3), radius: 8, x: 0, y: 4)
+    }
+}
+
+struct RecoveryHRVCard: View {
+    let hrv: Double
+    let goal: Double?
+    let colorScheme: ColorScheme
+
+    @State private var animatedProgress: Double = 0.0
+
+    private var progress: Double {
+        guard let goal = goal, goal > 0 else { return 0 }
+        return min(hrv / goal, 1)
+    }
+
+    private var cardBackground: Color {
+        colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground)
+    }
+
+    var body: some View {
+        VStack(spacing: 16) {
+            HStack {
+                Label("Today's HRV", systemImage: "waveform.path.ecg")
+                    .font(.headline)
+                Spacer()
+            }
+
+            ZStack {
+                Circle()
+                    .stroke(Color.gray.opacity(0.2), lineWidth: 10)
+                    .frame(width: 100, height: 100)
+
+                Circle()
+                    .trim(from: 0, to: CGFloat(animatedProgress))
+                    .stroke(Color.purple, style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .frame(width: 100, height: 100)
+
+                VStack {
+                    Text("\(Int(hrv))")
+                        .font(.title)
+                        .fontWeight(.bold)
+                    Text("ms")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+
+            if let goal = goal {
+                Text("Goal: \(Int(goal)) ms")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer()
+        }
+        .padding()
+        .frame(maxWidth: .infinity)
+        .frame(height: 180)
+        .background(cardBackground)
+        .cornerRadius(16)
+        .shadow(color: Color.purple.opacity(0.3), radius: 8, x: 0, y: 4)
+        .onAppear {
+            withAnimation(.easeOut(duration: 1.2)) {
+                animatedProgress = progress
+            }
+        }
     }
 }
 
