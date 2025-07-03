@@ -87,7 +87,7 @@ struct NutritionView: View {
                 NutritionInsightsCard(insights: generateNutritionInsights(), colorScheme: colorScheme)
                     .padding(.horizontal)
 
-                // Macronutrient and Water Cards
+                // Metric Cards
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
                     NutritionRingCard(
                         title: "Calories",
@@ -176,7 +176,6 @@ struct NutritionView: View {
     }
 }
 
-
 import SwiftUI
 
 struct NutritionRingCard: View {
@@ -204,7 +203,7 @@ struct NutritionRingCard: View {
                 Spacer()
             }
 
-            // Circular ring
+            // Ring visualization
             ZStack {
                 Circle()
                     .stroke(Color.gray.opacity(0.2), lineWidth: 10)
@@ -308,7 +307,6 @@ struct WaterIntakeCard: View {
         }
     }
 }
-
 
 
 struct NutritionChartCard<Content: View>: View {
@@ -558,6 +556,10 @@ struct MetricDetailView: View {
         userProfile.saveToFirestore()
 
 
+
+
+import SwiftUI
+
 struct ManualNutritionEntryView: View {
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var userProfile: UserProfile
@@ -622,4 +624,5 @@ struct ManualNutritionEntryView: View {
         presentationMode.wrappedValue.dismiss()
     }
 }
+
 
