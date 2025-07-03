@@ -44,6 +44,13 @@ class HealthManager: ObservableObject {
     @Published var height: Double?
     @Published var dailyGoals: [String: Double] = [:]
     @Published var trainingScores: [TrainingScore] = []
+    /// Scores for the last seven days including today, sorted by date
+    var lastSevenScores: [TrainingScore] {
+        let start = Calendar.current.date(byAdding: .day, value: -6, to: Date()) ?? Date()
+        return trainingScores
+            .filter { $0.date >= Calendar.current.startOfDay(for: start) }
+            .sorted { $0.date < $1.date }
+    }
     @Published var recentWorkouts: [HKWorkout] = []
     @Published var recoveryScore: Double? = nil
     @Published var stressLevel: Double? = nil

@@ -94,41 +94,7 @@ struct TrainingView: View {
 
                 RecentWorkoutsCard(healthManager: healthManager, colorScheme: colorScheme)
                 
-                // 7-Day Training Score Trend
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Text("Overall Training – 7 Day Trends")
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                        Spacer()
-                        Button(action: {
-                            showingManualEntry = true
-                        }) {
-                            Image(systemName: "plus.circle")
-                        }
-                    }
-                    .padding(.horizontal)
-
-                    if healthManager.trainingScores.isEmpty {
-                        Text("No training scores yet.")
-                            .foregroundColor(.secondary)
-                            .padding(.horizontal)
-                    } else {
-                        Chart(healthManager.trainingScores) { entry in
-                            LineMark(
-                                x: .value("Date", entry.date),
-                                y: .value("Score", entry.score)
-                            )
-                            PointMark(
-                                x: .value("Date", entry.date),
-                                y: .value("Score", entry.score)
-                            )
-                        }
-                        .chartYScale(domain: 0...100)
-                        .frame(height: 200)
-                        .padding(.horizontal)
-                    }
-                }
+                TrainingScoreTrendCard(healthManager: healthManager)
             }
             .padding(.vertical)
         }
@@ -569,6 +535,49 @@ struct RecentWorkoutsCard: View {
         formatter.dateStyle = .short
         formatter.timeStyle = .short
         return formatter.string(from: date)
+    }
+}
+
+struct TrainingScoreTrendCard: View {
+    @ObservedObject var healthManager: HealthManager
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Overall Training – 7 Day Trends")
+                .font(.headline)
+                .foregroundColor(.primary)
+
+            if healthManager.lastSevenScores.isEmpty {
+                Text("No training scores yet.")
+                    .foregroundColor(.secondary)
+            } else {
+                Chart(healthManager.lastSevenScores) { entry in
+                    LineMark(
+                        x: .value("Date", entry.date),
+                        y: .value("Score", entry.score)
+                    )
+                    .interpolationMethod(.linear)
+
+                    PointMark(
+                        x: .value("Date", entry.date),
+                        y: .value("Score", entry.score)
+                    )
+                }
+                .chartYScale(domain: 0...100)
+                .chartXAxis {
+                    AxisMarks(values: .stride(by: .day)) { value in
+                        AxisGridLine()
+                        AxisTick()
+                        AxisValueLabel(format: .dateTime.month().day(), centered: true)
+                    }
+                }
+                .frame(height: 200)
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(16)
+        .padding(.horizontal)
     }
 }
 
