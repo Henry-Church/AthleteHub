@@ -68,40 +68,39 @@ struct RecoveryView: View {
     @State private var showingManualEntry = false
 
     var recoveryCards: [AnyView] {
-        [
-            AnyView(
+    [
+        AnyView(
             RecoverySleepDurationCard(
-                    title: "Sleep Duration",
-                    value: String(format: "%.1f hrs", healthManager.sleepDuration ?? 0),
-                    stages: healthManager.sleepStages,
-                    colorScheme: colorScheme
-                )),
-            AnyView(
-                SleepQualityCard(
-                    score: Int(healthManager.sleepQualityScore ?? 0),
-                    colorScheme: colorScheme
-                )
-            ),
-            AnyView(
-                RecoveryMetricCard(
-                    title: "Stress Level",
-                    actual: healthManager.stressLevel ?? 0,
-                    goal: 30,
-                    unit: "score",
-                    colorScheme: colorScheme
-                )
-            ),
-            AnyView(
-                RecoveryMetricCard(
-                    title: "Resting HR",
-                    actual: healthManager.restingHeartRate ?? 0,
-                    goal: nil,
-                    unit: "bpm",
-                    colorScheme: colorScheme
-                )
-            ),
-        ]
-    }
+                title: "Sleep Duration",
+                value: String(format: "%.1f hrs", healthManager.sleepDuration ?? 0),
+                stages: healthManager.sleepStages,
+                colorScheme: colorScheme
+            )
+        ),
+        AnyView(
+            SleepQualityCard(
+                score: Int(healthManager.sleepQualityScore ?? 0),
+                colorScheme: colorScheme
+            )
+        ),
+        AnyView(
+            RecoveryMetricCard(
+                title: "Today's HRV",
+                actual: healthManager.hrv ?? 0,
+                goal: 80,
+                unit: "ms",
+                colorScheme: colorScheme
+            )
+        ),
+        AnyView(
+            RestingHRScoreCard(
+                restingHR: healthManager.restingHeartRate ?? 0,
+                weekValues: healthManager.restingHRWeek,
+                colorScheme: colorScheme
+            )
+        )
+    ]
+}
 
     var body: some View {
         ScrollView {
@@ -169,6 +168,11 @@ struct RecoveryView: View {
                     }
                 }
                 .padding(.horizontal)
+
+                HRVChartCard(
+                    values: healthManager.hrvWeek,
+                    colorScheme: colorScheme
+                )
             }
             .padding(.vertical)
         }
@@ -452,6 +456,76 @@ struct SleepQualityCard: View {
     }
 }
 
+struct RestingHRScoreCard: View {
+    let restingHR: Double
+    let weekValues: [Double]
+    let colorScheme: ColorScheme
+
+    private var score: Int {
+        guard restingHR > 0, !weekValues.isEmpty else { return 0 }
+        let avg = weekValues.reduce(0, +) / Double(weekValues.count)
+        let diff = restingHR - avg
+        let rawScore = 100 - diff * 5
+        return max(0, min(100, Int(rawScore)))
+    }
+
+    private var progress: Double { Double(score) / 100.0 }
+
+    private var statusText: String {
+        switch score {
+        case 80...100: return "Excellent"
+        case 60..<80: return "Moderate"
+        default: return "High"
+        }
+    }
+
+    private var statusColor: Color {
+        switch score {
+        case 80...100: return .green
+        case 60..<80: return .yellow
+        default: return .red
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 16) {
+            HStack {
+                Label("Resting HR", systemImage: "heart.fill")
+                    .font(.headline)
+                Spacer()
+            }
+
+            ZStack {
+                Circle()
+                    .stroke(Color.gray.opacity(0.2), lineWidth: 10)
+                    .frame(width: 100, height: 100)
+
+                Circle()
+                    .trim(from: 0, to: CGFloat(progress))
+                    .stroke(statusColor, style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .frame(width: 100, height: 100)
+
+                VStack {
+                    Text("\(Int(restingHR))")
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundColor(statusColor)
+                    Text(statusText)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity)
+        .frame(height: 180)
+        .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
+        .cornerRadius(16)
+        .shadow(color: Color.purple.opacity(0.15), radius: 8, x: 0, y: 4)
+    }
+}
+
 struct HRVChartCard: View {
     let values: [Double]
     let colorScheme: ColorScheme
@@ -485,7 +559,11 @@ struct HRVChartCard: View {
         .padding()
         .frame(maxWidth: .infinity)
         .frame(height: 200)
-        .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
+        .background(
+            colorScheme == .dark
+            ? Color(.secondarySystemBackground)
+            : Color(.systemBackground)
+        )
         .cornerRadius(16)
         .shadow(color: Color.purple.opacity(0.15), radius: 8, x: 0, y: 4)
     }

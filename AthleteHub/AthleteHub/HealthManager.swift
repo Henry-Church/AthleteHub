@@ -35,6 +35,7 @@ class HealthManager: ObservableObject {
     @Published var restingHeartRate: Double?
     @Published var hrv: Double?
     @Published var hrvWeek: [Double] = []
+    @Published var restingHRWeek: [Double] = []
     @Published var sleepDuration: Double?
     @Published var sleepQuality: String = "Unknown"
     @Published var sleepStages: [SleepStage] = []
@@ -151,6 +152,7 @@ class HealthManager: ObservableObject {
         fetchRestingHeartRate { _ in self.save() }
         fetchHRV { _ in self.save() }
         fetchHRVWeek() // No completion handler — consider adding one for reliability
+        fetchRestingHRWeek()
 
         fetchSteps { _ in self.save() }
         fetchVO2Max { _ in self.save() }
@@ -502,6 +504,42 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
             }
             DispatchQueue.main.async {
                 self.hrvWeek = values
+                completion(values)
+            }
+        }
+
+        healthStore.execute(query)
+    }
+
+    func fetchRestingHRWeek(completion: @escaping ([Double]) -> Void = { _ in }) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .restingHeartRate) else {
+            return completion([])
+        }
+
+        let calendar = Calendar.current
+        let endDate = Date()
+        let startDate = calendar.date(byAdding: .day, value: -6, to: calendar.startOfDay(for: endDate)) ?? endDate
+
+        var interval = DateComponents()
+        interval.day = 1
+
+        let query = HKStatisticsCollectionQuery(
+            quantityType: type,
+            quantitySamplePredicate: HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictStartDate),
+            options: .discreteAverage,
+            anchorDate: calendar.startOfDay(for: startDate),
+            intervalComponents: interval)
+
+        query.initialResultsHandler = { _, results, _ in
+            var values: [Double] = []
+            if let stats = results {
+                stats.enumerateStatistics(from: startDate, to: endDate) { stat, _ in
+                    let value = stat.averageQuantity()?.doubleValue(for: HKUnit.count().unitDivided(by: .minute())) ?? 0
+                    values.append(value)
+                }
+            }
+            DispatchQueue.main.async {
+                self.restingHRWeek = values
                 completion(values)
             }
         }
