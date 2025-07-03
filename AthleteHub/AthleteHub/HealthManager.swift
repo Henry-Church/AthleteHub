@@ -114,7 +114,7 @@ class HealthManager: ObservableObject {
             HKObjectType.quantityType(forIdentifier: .bodyMass)!,
             HKObjectType.quantityType(forIdentifier: .height)!,
             HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!,
-            HKObjectType.workoutType() // ✅ Add this line
+            HKObjectType.workoutType() // Needed for HKWorkout (includes totalDistance)
         ]
 
         healthStore.requestAuthorization(toShare: [], read: typesToRead) { success, _ in
@@ -122,11 +122,14 @@ class HealthManager: ObservableObject {
                 self.isAuthorized = success
                 self.isConnected = success
                 UserDefaults.standard.set(success, forKey: "healthConnected")
-                if success { self.startAutoRefresh() }
+                if success {
+                    self.startAutoRefresh()
+                }
                 completion(success)
             }
         }
     }
+
 
     func startAutoRefresh() {
         fetchAllData()
@@ -139,20 +142,25 @@ class HealthManager: ObservableObject {
     func fetchAllData() {
         fetchActiveEnergyBurned { _ in self.save() }
         fetchTotalCalories { _ in self.save() }
-        fetchWeeklyDistance { _ in }
-        fetchWeeklyHours { _ in }
+        fetchWeeklyDistance { _ in self.save() }
+        fetchWeeklyHours { _ in self.save() }
+
         fetchWorkoutDistance { _ in self.save() }
         fetchWorkoutDuration { _ in self.save() }
+
         fetchRestingHeartRate { _ in self.save() }
         fetchHRV { _ in self.save() }
-        fetchHRVWeek()
+        fetchHRVWeek() // No completion handler — consider adding one for reliability
+
         fetchSteps { _ in self.save() }
         fetchVO2Max { _ in self.save() }
         fetchBodyMass { _ in self.save() }
         fetchHeight { _ in self.save() }
+
         fetchSleepData { _ in self.save() }
         fetchWorkouts { _ in self.save() }
     }
+
 
     func saveDailyMetricsToFirestore(userId: String) {
         let today = Date()

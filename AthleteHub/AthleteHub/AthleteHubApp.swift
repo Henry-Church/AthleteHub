@@ -21,9 +21,10 @@ struct AthleteHubApp: App {
             if isLoading {
                 SplashView()
                     .onAppear {
-                        // Simulate any setup / initialization delay
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                            isLoading = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                            withAnimation {
+                                isLoading = false
+                            }
                         }
                     }
             } else {
@@ -38,7 +39,7 @@ struct AthleteHubApp: App {
 
 class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication,
-                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         FirebaseApp.configure()
         return true
     }

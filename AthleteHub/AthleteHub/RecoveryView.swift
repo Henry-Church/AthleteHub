@@ -592,68 +592,62 @@ struct SleepStageHypnogramView: View {
 
     var body: some View {
         GeometryReader { geometry in
-            let labelWidth: CGFloat = 48
-            let timeHeight: CGFloat = 16
-            let chartWidth = geometry.size.width - labelWidth
-            let chartHeight = geometry.size.height - timeHeight
-            let rowHeight = chartHeight / CGFloat(stageOrder.count)
+            if totalDuration == 0 {
+                EmptyView()
+            } else {
+                let labelWidth: CGFloat = 48
+                let timeHeight: CGFloat = 16
+                let chartWidth = geometry.size.width - labelWidth
+                let chartHeight = geometry.size.height - timeHeight
+                let rowHeight = chartHeight / CGFloat(stageOrder.count)
+                let chartHours: Double = 9
+                let totalSeconds = chartHours * 3600
+                let hourTicks = stride(from: 0.0, through: totalSeconds, by: 3600).map { $0 }
+                let groupedByStage = Dictionary(grouping: timelineEntries, by: { $0.stage })
 
-            guard totalDuration > 0 else {
-                return AnyView(EmptyView())
+                ZStack(alignment: .topLeading) {
+                    // Sleep stage bars
+                    ForEach(stageOrder.indices, id: \.self) { index in
+                        let stage = stageOrder[index]
+                        let entries = groupedByStage[stage] ?? []
+
+                        ForEach(entries.indices, id: \.self) { i in
+                            let entry = entries[i]
+                            let startOffset = CGFloat(entry.start / totalSeconds) * chartWidth
+                            let width = CGFloat(entry.duration / totalSeconds) * chartWidth
+                            let yOffset = CGFloat(index) * rowHeight
+
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(stageColor(for: stage))
+                                .frame(width: width, height: rowHeight * 0.6)
+                                .offset(x: labelWidth + startOffset, y: yOffset + rowHeight * 0.2)
+                        }
+                    }
+
+                    // Stage labels
+                    ForEach(stageOrder.indices, id: \.self) { index in
+                        Text(stageName(for: stageOrder[index]))
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                            .frame(width: labelWidth - 4, alignment: .leading)
+                            .offset(x: 0, y: CGFloat(index) * rowHeight + rowHeight * 0.2)
+                    }
+
+                    // Time labels
+                    ForEach(hourTicks.indices, id: \.self) { i in
+                        let tick = hourTicks[i]
+                        let x = labelWidth + CGFloat(tick / totalSeconds) * chartWidth
+                        Text("\(Int(tick / 3600))h")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                            .offset(x: x - 10, y: chartHeight + 2)
+                    }
+                }
             }
-
-            // Display up to 9 hours on the timeline starting at 0h
-            let chartHours: Double = 9
-            let totalSeconds = chartHours * 3600
-            let hourTicks = stride(from: 0.0, through: totalSeconds, by: 3600).map { $0 }
-
-            // Group the timeline entries by stage for easy drawing
-            let groupedByStage = Dictionary(grouping: timelineEntries, by: { $0.stage })
-
-return AnyView(
-    ZStack(alignment: .topLeading) {
-        // Sleep stage bars
-        ForEach(stageOrder.indices, id: \.self) { index in
-            let stage = stageOrder[index]
-            let entries = groupedByStage[stage] ?? []
-
-            ForEach(entries.indices, id: \.self) { i in
-                let entry = entries[i]
-                let startOffset = CGFloat(entry.start / totalSeconds) * chartWidth
-                let width = CGFloat(entry.duration / totalSeconds) * chartWidth
-                let yOffset = CGFloat(index) * rowHeight
-
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(stageColor(for: stage))
-                    .frame(width: width, height: rowHeight * 0.6)
-                    .offset(x: labelWidth + startOffset, y: yOffset + rowHeight * 0.2)
-            }
         }
-
-        // Stage labels
-        ForEach(stageOrder.indices, id: \.self) { index in
-            Text(stageName(for: stageOrder[index]))
-                .font(.caption2)
-                .foregroundColor(.secondary)
-                .frame(width: labelWidth - 4, alignment: .leading)
-                .offset(x: 0, y: CGFloat(index) * rowHeight + rowHeight * 0.2)
-        }
-
-        // Time labels
-        ForEach(hourTicks.indices, id: \.self) { i in
-            let tick = hourTicks[i]
-            let x = labelWidth + CGFloat(tick / totalSeconds) * chartWidth
-            Text("\(Int(tick / 3600))h")
-                .font(.caption2)
-                .foregroundColor(.secondary)
-                .offset(x: x - 10, y: chartHeight + 2)
-        }
-    })
         .frame(height: 140)
         .background(Color(.systemGray6))
         .cornerRadius(12)
-    }
-
     }
 
     private func stageColor(for stage: HKCategoryValueSleepAnalysis) -> Color {
@@ -681,4 +675,3 @@ return AnyView(
         }
     }
 }
-
