@@ -134,33 +134,7 @@ struct NutritionView: View {
 
 // The rest of the supporting views like NutritionRingCard, WaterIntakeCard, etc. will be appended below...
 
-// MARK: - NutritionRingCard
 
-struct NutritionRingCard: View {
-    let title: String
-    let icon: String
-    let value: String
-    let goal: String
-    let percentage: String
-    let colorScheme: ColorScheme
-    var onTap: () -> Void = {}
-
-    @State private var animatedProgress: Double = 0.0
-
-    private var progress: Double {
-        (Double(percentage.replacingOccurrences(of: "%", with: "")) ?? 0) / 100.0
-    }
-
-private var ringColor: Color {
-    switch progress {
-    case ..<0.5:
-        return .red
-    case ..<0.75:
-        return .yellow
-    default:
-        return .green
-    }
-}
 
     var body: some View {
         VStack(spacing: 16) {
@@ -215,85 +189,6 @@ private var ringColor: Color {
 
 // MARK: - WaterIntakeCard
 
-struct WaterIntakeCard: View {
-    let intake: String
-    let goal: String
-    let percentage: String
-    let colorScheme: ColorScheme
-    var onTap: () -> Void = {}
-
-    @State private var animatedProgress: Double = 0.0
-
-    private var progress: Double {
-        (Double(percentage.replacingOccurrences(of: "%", with: "")) ?? 0) / 100.0
-    }
-
-    private var numericIntake: Double {
-        Double(intake.filter { "0123456789.".contains($0) }) ?? 0
-    }
-
-    private var numericGoal: Double {
-        Double(goal.filter { "0123456789.".contains($0) }) ?? 0
-    }
-
-    private var remaining: Double {
-        max(numericGoal - numericIntake, 0)
-    }
-
-    var body: some View {
-        VStack(spacing: 16) {
-            HStack {
-                Label("Water", systemImage: "drop.fill")
-                    .font(.headline)
-                Spacer()
-            }
-
-            ZStack {
-                Circle()
-                    .stroke(Color.gray.opacity(0.2), lineWidth: 10)
-                    .frame(width: 100, height: 100)
-
-                Circle()
-                    .trim(from: 0, to: CGFloat(animatedProgress))
-                    .stroke(Color.blue, style: StrokeStyle(lineWidth: 10, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-                    .frame(width: 100, height: 100)
-
-                VStack(spacing: 4) {
-                    Text(String(format: "%.1f L", numericIntake))
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.blue)
-                    Text(String(format: "/%.1f L", numericGoal))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
-
-            Text("\(percentage) of goal")
-                .font(.caption2)
-                .foregroundColor(.secondary)
-
-            Text(String(format: "%.1f L remaining", remaining))
-                .font(.caption2)
-                .foregroundColor(.blue)
-        }
-        .padding()
-        .frame(maxWidth: .infinity)
-        .frame(height: 180)
-        .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
-        .cornerRadius(16)
-        .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
-        .onAppear {
-            withAnimation(.easeOut(duration: 1.0)) {
-                animatedProgress = progress
-            }
-        }
-        .onTapGesture {
-            onTap()
-        }
-    }
-}
 
 // MARK: - NutritionChartCard
 
