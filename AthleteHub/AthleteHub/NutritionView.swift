@@ -2,8 +2,6 @@
 
 import SwiftUI
 
-import SwiftUI
-
 struct NutritionView: View {
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var userProfile: UserProfile
@@ -11,6 +9,7 @@ struct NutritionView: View {
 
     @State private var showingSetGoals = false
     @State private var showingManualEntry = false
+    @State private var activeMetric: MetricType?
 
     private func percentage(from text: String?) -> Double? {
         guard let stripped = text?.replacingOccurrences(of: "%", with: ""),
@@ -97,7 +96,8 @@ struct NutritionView: View {
                         goal: userProfile.caloriesGoal ?? "0 cal",
                         percentage: userProfile.caloriesPercentage ?? "0%",
                         ringColor: .orange,
-                        colorScheme: colorScheme
+                        colorScheme: colorScheme,
+                        onTap: { activeMetric = .calories }
                     )
 
                     NutritionRingCard(
@@ -107,7 +107,8 @@ struct NutritionView: View {
                         goal: userProfile.proteinGoal ?? "0 g",
                         percentage: userProfile.proteinPercentage ?? "0%",
                         ringColor: .red,
-                        colorScheme: colorScheme
+                        colorScheme: colorScheme,
+                        onTap: { activeMetric = .protein }
                     )
 
                     NutritionRingCard(
@@ -117,7 +118,8 @@ struct NutritionView: View {
                         goal: userProfile.carbsGoal ?? "0 g",
                         percentage: userProfile.carbsPercentage ?? "0%",
                         ringColor: .yellow,
-                        colorScheme: colorScheme
+                        colorScheme: colorScheme,
+                        onTap: { activeMetric = .carbs }
                     )
 
                     NutritionRingCard(
@@ -127,7 +129,8 @@ struct NutritionView: View {
                         goal: userProfile.fatGoal ?? "0 g",
                         percentage: userProfile.fatPercentage ?? "0%",
                         ringColor: .purple,
-                        colorScheme: colorScheme
+                        colorScheme: colorScheme,
+                        onTap: { activeMetric = .fat }
                     )
                 }
                 .padding(.horizontal)
@@ -136,7 +139,8 @@ struct NutritionView: View {
                     intake: userProfile.waterIntake ?? "0",
                     goal: userProfile.waterGoal ?? "0 L",
                     percentage: userProfile.waterPercentage ?? "0%",
-                    colorScheme: colorScheme
+                    colorScheme: colorScheme,
+                    onTap: { activeMetric = .water }
                 )
                 .padding(.horizontal)
 
@@ -153,7 +157,6 @@ struct NutritionView: View {
                             .cornerRadius(12)
                     }
                 }
-                .padding(.horizontal)
             }
             .padding(.vertical)
         }
@@ -166,8 +169,15 @@ struct NutritionView: View {
             ManualNutritionEntryView()
                 .environmentObject(userProfile)
         }
+        .sheet(item: $activeMetric) { metric in
+            MetricDetailView(metric: metric)
+                .environmentObject(userProfile)
+        }
     }
 }
+
+
+import SwiftUI
 
 struct NutritionRingCard: View {
     let title: String
@@ -177,6 +187,7 @@ struct NutritionRingCard: View {
     let percentage: String
     let ringColor: Color
     let colorScheme: ColorScheme
+    var onTap: () -> Void = {}
 
     @State private var animatedProgress: Double = 0.0
 
@@ -223,11 +234,7 @@ struct NutritionRingCard: View {
         .padding()
         .frame(maxWidth: .infinity)
         .frame(height: 180)
-        .background(
-            colorScheme == .dark
-            ? Color(.secondarySystemBackground)
-            : Color(.systemBackground)
-        )
+        .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
         .cornerRadius(16)
         .shadow(color: ringColor.opacity(0.3), radius: 8, x: 0, y: 4)
         .onAppear {
@@ -235,8 +242,73 @@ struct NutritionRingCard: View {
                 animatedProgress = progress
             }
         }
+        .onTapGesture {
+            onTap()
+        }
     }
 }
+
+
+import SwiftUI
+
+struct WaterIntakeCard: View {
+    let intake: String
+    let goal: String
+    let percentage: String
+    let colorScheme: ColorScheme
+    var onTap: () -> Void = {}
+
+    @State private var animatedProgress: Double = 0.0
+
+    private var progress: Double {
+        (Double(percentage.replacingOccurrences(of: "%", with: "")) ?? 0) / 100.0
+    }
+
+    var body: some View {
+        VStack(spacing: 16) {
+            HStack {
+                Image(systemName: "drop.fill")
+                    .foregroundColor(.blue)
+                Text("Water")
+                    .font(.headline)
+                Spacer()
+            }
+
+            ZStack(alignment: .bottom) {
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.blue.opacity(0.2))
+                    .frame(width: 40, height: 100)
+
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.blue)
+                    .frame(width: 40, height: CGFloat(animatedProgress) * 100)
+            }
+
+            Text("\(intake) / \(goal)")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .padding()
+        .frame(maxWidth: .infinity)
+        .frame(height: 180)
+        .background(
+            colorScheme == .dark
+            ? Color(.secondarySystemBackground)
+            : Color(.systemBackground)
+        )
+        .cornerRadius(16)
+        .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
+        .onAppear {
+            withAnimation(.easeOut(duration: 1.0)) {
+                animatedProgress = progress
+            }
+        }
+        .onTapGesture {
+            onTap()
+        }
+    }
+}
+
 
 
 struct NutritionChartCard<Content: View>: View {
@@ -395,7 +467,96 @@ struct SetNutritionGoalsView: View {
     }
 }
 
-import SwiftUI
+enum MetricType: String, Identifiable {
+    case calories
+    case protein
+    case carbs
+    case fat
+    case water
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .calories: return "Calories"
+        case .protein:  return "Protein"
+        case .carbs:    return "Carbohydrates"
+        case .fat:      return "Fat"
+        case .water:    return "Water"
+        }
+    }
+}
+
+struct MetricDetailView: View {
+    let metric: MetricType
+    @EnvironmentObject var userProfile: UserProfile
+    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.colorScheme) var colorScheme
+
+    @State private var value: String = ""
+
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                metricCard
+                    .frame(height: 220)
+
+                TextField("Enter \(metric.title)", text: $value)
+                    .keyboardType(.decimalPad)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding(.horizontal)
+
+                Button("Save") {
+                    save()
+                    presentationMode.wrappedValue.dismiss()
+                }
+                .padding()
+
+                Spacer()
+            }
+            .navigationTitle(metric.title)
+            .navigationBarItems(trailing: Button("Close") {
+                presentationMode.wrappedValue.dismiss()
+            })
+            .onAppear { value = currentValue }
+        }
+    }
+
+    private var metricCard: some View {
+        switch metric {
+        case .calories:
+            return AnyView(NutritionRingCard(title: "Calories", icon: "flame.fill", value: userProfile.caloriesConsumed ?? "0", goal: userProfile.caloriesGoal ?? "0 cal", percentage: userProfile.caloriesPercentage ?? "0%", ringColor: .orange, colorScheme: colorScheme))
+        case .protein:
+            return AnyView(NutritionRingCard(title: "Protein", icon: "bolt.fill", value: userProfile.proteinIntake ?? "0", goal: userProfile.proteinGoal ?? "0 g", percentage: userProfile.proteinPercentage ?? "0%", ringColor: .red, colorScheme: colorScheme))
+        case .carbs:
+            return AnyView(NutritionRingCard(title: "Carbs", icon: "leaf.fill", value: userProfile.carbsIntake ?? "0", goal: userProfile.carbsGoal ?? "0 g", percentage: userProfile.carbsPercentage ?? "0%", ringColor: .yellow, colorScheme: colorScheme))
+        case .fat:
+            return AnyView(NutritionRingCard(title: "Fat", icon: "chart.pie.fill", value: userProfile.fatIntake ?? "0", goal: userProfile.fatGoal ?? "0 g", percentage: userProfile.fatPercentage ?? "0%", ringColor: .purple, colorScheme: colorScheme))
+        case .water:
+            return AnyView(WaterIntakeCard(intake: userProfile.waterIntake ?? "0", goal: userProfile.waterGoal ?? "0 L", percentage: userProfile.waterPercentage ?? "0%", colorScheme: colorScheme))
+        }
+    }
+
+    private var currentValue: String {
+        switch metric {
+        case .calories: return userProfile.caloriesConsumed ?? ""
+        case .protein:  return userProfile.proteinIntake ?? ""
+        case .carbs:    return userProfile.carbsIntake ?? ""
+        case .fat:      return userProfile.fatIntake ?? ""
+        case .water:    return userProfile.waterIntake ?? ""
+        }
+    }
+
+    private func save() {
+        switch metric {
+        case .calories: userProfile.caloriesConsumed = value
+        case .protein:  userProfile.proteinIntake = value
+        case .carbs:    userProfile.carbsIntake = value
+        case .fat:      userProfile.fatIntake = value
+        case .water:    userProfile.waterIntake = value
+        }
+        userProfile.saveToFirestore()
+
 
 struct ManualNutritionEntryView: View {
     @Environment(\.presentationMode) var presentationMode
