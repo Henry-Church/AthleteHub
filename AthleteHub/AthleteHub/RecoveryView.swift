@@ -53,10 +53,9 @@ struct OverallRecoveryScoreCard: View {
                 .cornerRadius(8)
         }
         .padding()
-        .frame(maxWidth: .infinity)
         .background(Color.purple)
         .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
+        .shadow(color: Color.purple.opacity(0.3), radius: 8, x: 0, y: 4)
         .padding(.horizontal)
     }
 }
@@ -167,31 +166,6 @@ offset) { _, view in
                     }
                 }
 
-                RecoveryChartCard(title: "HRV Avg (7d)", colorScheme: colorScheme) {
-                    if #available(iOS 16.0, *) {
-                        Chart {
-                            ForEach(healthManager.hrvWeek.indices, id: \.self) { i in
-                                LineMark(
-                                    x: .value("Day", i),
-                                    y: .value("HRV", healthManager.hrvWeek[i])
-                                )
-                                PointMark(
-                                    x: .value("Day", i),
-                                    y: .value("HRV", healthManager.hrvWeek[i])
-                                )
-                            }
-                        }
-                        .chartYScale(domain: 0...(healthManager.hrvWeek.max() ?? 1))
-                        .frame(height: 140)
-                    } else {
-                        Text("Available on iOS 16+")
-                            .foregroundColor(.secondary)
-                            .frame(height: 150)
-                            .frame(maxWidth: .infinity)
-                            .background(Color(.secondarySystemBackground))
-                            .cornerRadius(12)
-                    }
-                }
 
                 RecoveryChartCard(title: "HRV Avg (7d)", colorScheme: colorScheme) {
                     if #available(iOS 16.0, *) {
@@ -286,7 +260,7 @@ private var cardBackground: Color {
         .frame(height: 180)
         .background(cardBackground)
         .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
+        .shadow(color: Color.purple.opacity(0.3), radius: 8, x: 0, y: 4)
     }
 
     private func barWidth(for stage: SleepStage, totalWidth: CGFloat) -> CGFloat {
@@ -360,7 +334,7 @@ struct RecoveryMetricCard: View {
         .frame(height: 180)
         .background(cardBackground)
         .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
+        .shadow(color: Color.purple.opacity(0.3), radius: 8, x: 0, y: 4)
     }
 }
 
@@ -387,7 +361,7 @@ struct RecoveryChartCard<Content: View>: View {
         .padding()
         .background(colorScheme == .dark ? Color(.systemGray6) : Color.white)
         .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
+        .shadow(color: Color.purple.opacity(0.3), radius: 8, x: 0, y: 4)
         .padding(.horizontal)
     }
 }
@@ -492,7 +466,7 @@ struct SleepQualityCard: View {
         .frame(height: 180)
         .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
         .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
+        .shadow(color: Color.purple.opacity(0.3), radius: 8, x: 0, y: 4)
         .onAppear {
             withAnimation(.easeOut(duration: 1.2)) {
                 animatedProgress = progress
@@ -567,7 +541,7 @@ struct RestingHRScoreCard: View {
         .frame(height: 180)
         .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
         .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
+        .shadow(color: Color.purple.opacity(0.3), radius: 8, x: 0, y: 4)
     }
 }
 
