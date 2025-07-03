@@ -68,39 +68,39 @@ struct RecoveryView: View {
     @State private var showingManualEntry = false
 
     var recoveryCards: [AnyView] {
-        [
-            AnyView(
-                RecoverySleepDurationCard(
-                    title: "Sleep Duration",
-                    value: String(format: "%.1f hrs", healthManager.sleepDuration ?? 0),
-                    stages: healthManager.sleepStages,
-                    colorScheme: colorScheme
-                )
-            ),
-            AnyView(
-                SleepQualityCard(
-                    score: Int(healthManager.sleepQualityScore ?? 0),
-                    colorScheme: colorScheme
-                )
-            ),
-            AnyView(
-                RecoveryMetricCard(
-                    title: "Today's HRV",
-                    actual: healthManager.hrv ?? 0,
-                    goal: 80,
-                    unit: "ms",
-                    colorScheme: colorScheme
-                )
-            ),
-            AnyView(
-                RestingHRScoreCard(
-                    restingHR: healthManager.restingHeartRate ?? 0,
-                    weekValues: healthManager.restingHRWeek,
-                    colorScheme: colorScheme
-                )
+    [
+        AnyView(
+            RecoverySleepDurationCard(
+                title: "Sleep Duration",
+                value: String(format: "%.1f hrs", healthManager.sleepDuration ?? 0),
+                stages: healthManager.sleepStages,
+                colorScheme: colorScheme
             )
-        ]
-    }
+        ),
+        AnyView(
+            SleepQualityCard(
+                score: Int(healthManager.sleepQualityScore ?? 0),
+                colorScheme: colorScheme
+            )
+        ),
+        AnyView(
+            RecoveryMetricCard(
+                title: "Today's HRV",
+                actual: healthManager.hrv ?? 0,
+                goal: 80,
+                unit: "ms",
+                colorScheme: colorScheme
+            )
+        ),
+        AnyView(
+            RestingHRScoreCard(
+                restingHR: healthManager.restingHeartRate ?? 0,
+                weekValues: healthManager.restingHRWeek,
+                colorScheme: colorScheme
+            )
+        )
+    ]
+}
 
     var body: some View {
         ScrollView {
@@ -156,6 +156,11 @@ struct RecoveryView: View {
                             .cornerRadius(12)
                     }
                 }
+
+                HRVChartCard(
+                    values: healthManager.hrvWeek,
+                    colorScheme: colorScheme
+                )
 
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
                     ForEach(Array(recoveryCards.enumerated()), id: \.offset) { _, view in
@@ -551,6 +556,16 @@ struct HRVChartCard: View {
                     .cornerRadius(12)
             }
         }
+        .padding()
+        .frame(maxWidth: .infinity)
+        .frame(height: 200)
+        .background(
+            colorScheme == .dark
+            ? Color(.secondarySystemBackground)
+            : Color(.systemBackground)
+        )
+        .cornerRadius(16)
+        .shadow(color: Color.purple.opacity(0.15), radius: 8, x: 0, y: 4)
     }
 }
 
