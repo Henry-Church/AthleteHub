@@ -134,7 +134,7 @@ struct RecoveryView: View {
                     }
 
                     OverallRecoveryScoreCard(
-                        score: Int(userProfile.overallRecoveryScore?.replacingOccurrences(of: "%", with: "") ?? "0") ?? 0,
+                        score: Int(healthManager.recoveryScore ?? Double(userProfile.overallRecoveryScore?.replacingOccurrences(of: "%", with: "") ?? "0") ?? 0),
                         colorScheme: colorScheme
                     )
                 }
