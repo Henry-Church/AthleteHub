@@ -36,6 +36,8 @@ class HealthManager: ObservableObject {
     @Published var hrv: Double?
     @Published var hrvWeek: [Double] = []
     @Published var restingHRWeek: [Double] = []
+    @Published var bloodOxygen: Double?
+    @Published var bloodOxygenWeek: [Double] = []
     @Published var sleepDuration: Double?
     @Published var sleepQuality: String = "Unknown"
     @Published var sleepStages: [SleepStage] = []
@@ -141,6 +143,7 @@ class HealthManager: ObservableObject {
             HKObjectType.quantityType(forIdentifier: .vo2Max)!,
             HKObjectType.quantityType(forIdentifier: .bodyMass)!,
             HKObjectType.quantityType(forIdentifier: .height)!,
+            HKObjectType.quantityType(forIdentifier: .oxygenSaturation)!,
             HKObjectType.quantityType(forIdentifier: .dietaryWater)!,
             HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!,
             HKObjectType.workoutType() // Needed for HKWorkout (includes totalDistance)
@@ -207,6 +210,8 @@ class HealthManager: ObservableObject {
         fetchHRV { _ in self.save() }
         fetchHRVWeek() // No completion handler — consider adding one for reliability
         fetchRestingHRWeek()
+        fetchBloodOxygen { _ in self.save() }
+        fetchBloodOxygenWeek()
 
         fetchSteps { _ in self.save() }
         fetchVO2Max { _ in self.save() }
@@ -248,7 +253,9 @@ class HealthManager: ObservableObject {
             "sleepQualityScore": sleepQualityScore ?? 0,
             "stressLevel": stressLevel ?? 0,
             "recoveryScore": recovery,
-            "hrvWeek": hrvWeek
+            "hrvWeek": hrvWeek,
+            "bloodOxygen": bloodOxygen ?? 0,
+            "bloodOxygenWeek": bloodOxygenWeek
         ]
 
         db.collection("users").document(userId)
@@ -603,6 +610,50 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
             }
             DispatchQueue.main.async {
                 self.restingHRWeek = values
+                completion(values)
+            }
+        }
+
+        healthStore.execute(query)
+    }
+
+    func fetchBloodOxygen(completion: @escaping (Double?) -> Void) {
+        fetchLatestQuantitySample(type: .oxygenSaturation, unit: HKUnit.percent()) { value in
+            let percent = (value ?? 0) * 100
+            self.bloodOxygen = value != nil ? percent : nil
+            completion(self.bloodOxygen)
+        }
+    }
+
+    func fetchBloodOxygenWeek(completion: @escaping ([Double]) -> Void = { _ in }) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .oxygenSaturation) else {
+            return completion([])
+        }
+
+        let calendar = Calendar.current
+        let endDate = Date()
+        let startDate = calendar.date(byAdding: .day, value: -6, to: calendar.startOfDay(for: endDate)) ?? endDate
+
+        var interval = DateComponents()
+        interval.day = 1
+
+        let query = HKStatisticsCollectionQuery(
+            quantityType: type,
+            quantitySamplePredicate: HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictStartDate),
+            options: .discreteAverage,
+            anchorDate: calendar.startOfDay(for: startDate),
+            intervalComponents: interval)
+
+        query.initialResultsHandler = { _, results, _ in
+            var values: [Double] = []
+            if let stats = results {
+                stats.enumerateStatistics(from: startDate, to: endDate) { stat, _ in
+                    let val = stat.averageQuantity()?.doubleValue(for: HKUnit.percent()) ?? 0
+                    values.append(val * 100)
+                }
+            }
+            DispatchQueue.main.async {
+                self.bloodOxygenWeek = values
                 completion(values)
             }
         }
