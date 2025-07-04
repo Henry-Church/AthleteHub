@@ -400,7 +400,7 @@ struct ManualTrainingEntryView: View {
     
     @EnvironmentObject var healthManager: HealthManager
     @Environment(\.presentationMode) var presentationMode
-    
+
     @State private var calories: String = ""
     @State private var steps: String = ""
     @State private var minutes: String = ""
@@ -413,56 +413,52 @@ struct ManualTrainingEntryView: View {
                 Section(header: Text("Enter Training Data")) {
                     TextField("Calories (kcal)", text: $calories)
                         .keyboardType(.decimalPad)
-                    
+
                     TextField("Steps", text: $steps)
                         .keyboardType(.numberPad)
-                    
+
                     TextField("Exercise Minutes", text: $minutes)
                         .keyboardType(.decimalPad)
-                    
+
                     TextField("Distance (km)", text: $distance)
                         .keyboardType(.decimalPad)
                 }
-                Button("Save") {
-                    if let calories = Double(calories) {
-                        healthManager.totalCalories = calories
-                    }
-                    if let steps = Double(steps) {
-                        healthManager.steps = steps
-                    }
-                    if let minutes = Double(minutes) {
-                        healthManager.exerciseMinutes = minutes
-                    }
-                    if let distance = Double(distance) {
-                        healthManager.distance = distance
-                    }
-                    
-                    if let userId = Auth.auth().currentUser?.uid {
-                        healthManager.saveDailyMetricsToFirestore(userId: userId)
-                    }
-                    
-                    presentationMode.wrappedValue.dismiss()
-                }
-                .navigationTitle("Manual Entry")
-                .navigationBarItems(trailing: Button("Save") {
-                    if let cal = Double(calories) {
-                        healthManager.activeCalories = cal
-                        healthManager.totalCalories = cal + (healthManager.totalCalories ?? 0 - (healthManager.activeCalories ?? 0))
-                    }
-                    if let st = Double(steps) {
-                        healthManager.steps = st
-                    }
-                    if let min = Double(minutes) {
-                        healthManager.exerciseMinutes = min
-                    }
-                    if let dist = Double(distance) {
-                        healthManager.distance = dist
-                    }
-                    
-                    presentationMode.wrappedValue.dismiss()
-                })
             }
+            .navigationTitle("Manual Entry")
+            .navigationBarItems(
+                leading: Button("Reset") { resetFields() },
+                trailing: Button("Save") { saveEntry() }
+            )
         }
+    }
+
+    private func resetFields() {
+        calories = ""
+        steps = ""
+        minutes = ""
+        distance = ""
+    }
+
+    private func saveEntry() {
+        if let cal = Double(calories) {
+            healthManager.activeCalories = cal
+            healthManager.totalCalories = cal + (healthManager.totalCalories ?? 0 - (healthManager.activeCalories ?? 0))
+        }
+        if let st = Double(steps) {
+            healthManager.steps = st
+        }
+        if let min = Double(minutes) {
+            healthManager.exerciseMinutes = min
+        }
+        if let dist = Double(distance) {
+            healthManager.distance = dist
+        }
+
+        if let userId = Auth.auth().currentUser?.uid {
+            healthManager.saveDailyMetricsToFirestore(userId: userId)
+        }
+
+        presentationMode.wrappedValue.dismiss()
     }
 }
 
