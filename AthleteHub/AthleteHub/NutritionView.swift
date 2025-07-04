@@ -471,7 +471,8 @@ struct NutritionView: View {
     struct ManualNutritionEntryView: View {
         @Environment(\.presentationMode) var presentationMode
         @EnvironmentObject var userProfile: UserProfile
-        
+
+        @State private var mealName: String = ""
         @State private var calories: String = ""
         @State private var protein: String = ""
         @State private var carbs: String = ""
@@ -483,6 +484,9 @@ struct NutritionView: View {
             NavigationView {
                 ScrollView {
                     VStack(spacing: 16) {
+                        TextField("Meal Name", text: $mealName)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+
                         Group {
                             TextField("Calories", text: $calories)
                             TextField("Protein (g)", text: $protein)
@@ -493,9 +497,15 @@ struct NutritionView: View {
                         }
                         .keyboardType(.decimalPad)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
-                        
-                        Button(action: saveEntry) {
-                            Text("Save")
+
+                        HStack {
+                            Button("Reset") { resetFields() }
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.gray.opacity(0.2))
+                                .cornerRadius(12)
+
+                            Button("Add Meal") { addMeal() }
                                 .frame(maxWidth: .infinity)
                                 .padding()
                                 .background(Color.green)
@@ -506,7 +516,7 @@ struct NutritionView: View {
                     }
                     .padding()
                 }
-                .navigationTitle("Manual Nutrition Entry")
+                .navigationTitle("Add Meal")
                 .navigationBarItems(trailing: Button("Cancel") {
                     presentationMode.wrappedValue.dismiss()
                 })
@@ -520,15 +530,34 @@ struct NutritionView: View {
                 }
             }
         }
-        
-        private func saveEntry() {
-            userProfile.caloriesConsumed = calories
-            userProfile.proteinIntake = protein
-            userProfile.carbsIntake = carbs
-            userProfile.fatIntake = fat
-            userProfile.waterIntake = water
-            userProfile.fiberIntake = fiber
-            userProfile.loadFromFirestore()
+
+        private func resetFields() {
+            mealName = ""
+            calories = ""
+            protein = ""
+            carbs = ""
+            fat = ""
+            water = ""
+            fiber = ""
+        }
+
+        private func addMeal() {
+            func add(_ current: String?, with value: String) -> String {
+                let total = (Double(current ?? "0") ?? 0) + (Double(value) ?? 0)
+                return String(format: "%.0f", total)
+            }
+
+            userProfile.caloriesConsumed = add(userProfile.caloriesConsumed, with: calories)
+            userProfile.proteinIntake = add(userProfile.proteinIntake, with: protein)
+            userProfile.carbsIntake = add(userProfile.carbsIntake, with: carbs)
+            userProfile.fatIntake = add(userProfile.fatIntake, with: fat)
+            userProfile.waterIntake = add(userProfile.waterIntake, with: water)
+            userProfile.fiberIntake = add(userProfile.fiberIntake, with: fiber)
+
+            if !mealName.isEmpty {
+                userProfile.meals.append(mealName)
+            }
+
             presentationMode.wrappedValue.dismiss()
         }
     }

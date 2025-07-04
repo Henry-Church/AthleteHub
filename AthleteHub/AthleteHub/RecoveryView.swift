@@ -710,8 +710,9 @@ struct ManualRecoveryEntryView: View {
             }
             .navigationTitle("Manual Recovery Entry")
             .navigationBarItems(
-                leading: Button("Cancel") {
-                    presentationMode.wrappedValue.dismiss()
+                leading: HStack {
+                    Button("Cancel") { presentationMode.wrappedValue.dismiss() }
+                    Button("Reset") { resetFields() }
                 },
                 trailing: Button("Save") {
                     healthManager.saveManualRecoveryEntry(
@@ -725,6 +726,14 @@ struct ManualRecoveryEntryView: View {
                 }
             )
         }
+    }
+
+    private func resetFields() {
+        sleepDuration = 0
+        sleepScore = 0
+        hrv = 0
+        restingHR = 0
+        stressLevel = 0
     }
 }
 
