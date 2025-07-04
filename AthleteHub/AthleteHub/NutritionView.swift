@@ -180,10 +180,14 @@ struct NutritionView: View {
                 SetNutritionGoalsView().environmentObject(userProfile)
             }
             .sheet(isPresented: $showingManualEntry) {
-                ManualNutritionEntryView().environmentObject(userProfile)
+                ManualNutritionEntryView()
+                    .environmentObject(userProfile)
+                    .environmentObject(healthManager)
             }
             .sheet(item: $activeMetric) { metric in
-                MetricDetailView(metric: metric).environmentObject(userProfile)
+                MetricDetailView(metric: metric)
+                    .environmentObject(userProfile)
+                    .environmentObject(healthManager)
             }
         }
     }
@@ -471,6 +475,7 @@ struct NutritionView: View {
     struct ManualNutritionEntryView: View {
         @Environment(\.presentationMode) var presentationMode
         @EnvironmentObject var userProfile: UserProfile
+        @EnvironmentObject var healthManager: HealthManager
 
         @State private var mealName: String = ""
         @State private var calories: String = ""
@@ -554,6 +559,15 @@ struct NutritionView: View {
             userProfile.waterIntake = add(userProfile.waterIntake, with: water)
             userProfile.fiberIntake = add(userProfile.fiberIntake, with: fiber)
 
+            healthManager.saveDailyNutritionEntry(
+                calories: Double(calories),
+                protein: Double(protein),
+                carbs: Double(carbs),
+                fat: Double(fat),
+                water: Double(water),
+                fiber: Double(fiber)
+            )
+
             if !mealName.isEmpty {
                 userProfile.meals.append(mealName)
             }
@@ -589,6 +603,7 @@ struct NutritionView: View {
     struct MetricDetailView: View {
         let metric: MetricType
         @EnvironmentObject var userProfile: UserProfile
+        @EnvironmentObject var healthManager: HealthManager
         @Environment(\.presentationMode) var presentationMode
         @Environment(\.colorScheme) var colorScheme
         
@@ -654,13 +669,56 @@ struct NutritionView: View {
         
         private func save() {
             switch metric {
-            case .calories: userProfile.caloriesConsumed = value
-            case .protein:  userProfile.proteinIntake = value
-            case .carbs:    userProfile.carbsIntake = value
-            case .fat:      userProfile.fatIntake = value
+            case .calories:
+                userProfile.caloriesConsumed = value
+                healthManager.saveDailyNutritionEntry(
+                    calories: Double(value),
+                    protein: nil,
+                    carbs: nil,
+                    fat: nil,
+                    water: nil,
+                    fiber: nil
+                )
+            case .protein:
+                userProfile.proteinIntake = value
+                healthManager.saveDailyNutritionEntry(
+                    calories: nil,
+                    protein: Double(value),
+                    carbs: nil,
+                    fat: nil,
+                    water: nil,
+                    fiber: nil
+                )
+            case .carbs:
+                userProfile.carbsIntake = value
+                healthManager.saveDailyNutritionEntry(
+                    calories: nil,
+                    protein: nil,
+                    carbs: Double(value),
+                    fat: nil,
+                    water: nil,
+                    fiber: nil
+                )
+            case .fat:
+                userProfile.fatIntake = value
+                healthManager.saveDailyNutritionEntry(
+                    calories: nil,
+                    protein: nil,
+                    carbs: nil,
+                    fat: Double(value),
+                    water: nil,
+                    fiber: nil
+                )
             case .water:
                 userProfile.waterIntake = value
-                healthManager.waterIntake = Double(value)
+                healthManager.saveDailyNutritionEntry(
+                    calories: nil,
+                    protein: nil,
+                    carbs: nil,
+                    fat: nil,
+                    water: Double(value),
+                    fiber: nil
+                )
             }
             userProfile.loadFromFirestore()
         }

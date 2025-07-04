@@ -46,6 +46,11 @@ class HealthManager: ObservableObject {
     @Published var bodyMass: Double?
     @Published var height: Double?
     @Published var waterIntake: Double?
+    @Published var caloriesConsumed: Double?
+    @Published var proteinIntake: Double?
+    @Published var carbsIntake: Double?
+    @Published var fatIntake: Double?
+    @Published var fiberIntake: Double?
     @Published var dailyGoals: [String: Double] = [:]
     @Published var trainingScores: [TrainingScore] = []
     /// Scores for the last seven days including today, sorted by date
@@ -195,6 +200,11 @@ class HealthManager: ObservableObject {
         distance = nil
         steps = nil
         waterIntake = nil
+        caloriesConsumed = nil
+        proteinIntake = nil
+        carbsIntake = nil
+        fatIntake = nil
+        fiberIntake = nil
     }
 
     func fetchAllData() {
@@ -245,6 +255,11 @@ class HealthManager: ObservableObject {
             "bodyMass": bodyMass ?? 0,
             "height": height ?? 0,
             "waterIntake": waterIntake ?? 0,
+            "caloriesConsumed": caloriesConsumed ?? 0,
+            "proteinIntake": proteinIntake ?? 0,
+            "carbsIntake": carbsIntake ?? 0,
+            "fatIntake": fatIntake ?? 0,
+            "fiberIntake": fiberIntake ?? 0,
             "trainingScore": calculateOverallTrainingScore(),
             "weeklyDistance": weeklyDistance ?? 0,
             "weeklyHours": weeklyHours ?? 0,
@@ -314,6 +329,28 @@ class HealthManager: ObservableObject {
             hrv = h
             writeSampleToAppleHealth(type: .heartRateVariabilitySDNN, value: h, unit: HKUnit(from: "ms"))
         }
+
+        if let uid = Auth.auth().currentUser?.uid {
+            saveDailyMetricsToFirestore(userId: uid)
+        }
+    }
+
+    func saveDailyNutritionEntry(
+        calories: Double?,
+        protein: Double?,
+        carbs: Double?,
+        fat: Double?,
+        water: Double?,
+        fiber: Double?
+    ) {
+        if let c = calories { caloriesConsumed = (caloriesConsumed ?? 0) + c }
+        if let p = protein { proteinIntake = (proteinIntake ?? 0) + p }
+        if let ca = carbs { carbsIntake = (carbsIntake ?? 0) + ca }
+        if let f = fat { fatIntake = (fatIntake ?? 0) + f }
+        if let w = water {
+            waterIntake = (waterIntake ?? 0) + w
+        }
+        if let fi = fiber { fiberIntake = (fiberIntake ?? 0) + fi }
 
         if let uid = Auth.auth().currentUser?.uid {
             saveDailyMetricsToFirestore(userId: uid)
