@@ -189,6 +189,32 @@ struct RecoveryView: View {
                             .cornerRadius(12)
                     }
                 }
+
+                RecoveryChartCard(title: "Blood Oxygen (7d)", colorScheme: colorScheme) {
+                    if #available(iOS 16.0, *) {
+                        Chart {
+                            ForEach(healthManager.bloodOxygenWeek.indices, id: \.self) { i in
+                                LineMark(
+                                    x: .value("Day", i),
+                                    y: .value("Oxygen", healthManager.bloodOxygenWeek[i])
+                                )
+                                PointMark(
+                                    x: .value("Day", i),
+                                    y: .value("Oxygen", healthManager.bloodOxygenWeek[i])
+                                )
+                            }
+                        }
+                        .chartYScale(domain: 90...100)
+                        .frame(height: 140)
+                    } else {
+                        Text("Available on iOS 16+")
+                            .foregroundColor(.secondary)
+                            .frame(height: 150)
+                            .frame(maxWidth: .infinity)
+                            .background(Color(.secondarySystemBackground))
+                            .cornerRadius(12)
+                    }
+                }
             }
             .padding(.vertical)
         }
