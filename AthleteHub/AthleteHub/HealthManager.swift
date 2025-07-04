@@ -43,6 +43,7 @@ class HealthManager: ObservableObject {
     @Published var vo2Max: Double?
     @Published var bodyMass: Double?
     @Published var height: Double?
+    @Published var waterIntake: Double?
     @Published var dailyGoals: [String: Double] = [:]
     @Published var trainingScores: [TrainingScore] = []
     /// Scores for the last seven days including today, sorted by date
@@ -73,6 +74,7 @@ class HealthManager: ObservableObject {
 
     private let db = Firestore.firestore()
     private var timer: Timer?
+    private var resetTimer: Timer?
     
     let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -91,6 +93,7 @@ class HealthManager: ObservableObject {
         if isConnected {
             startAutoRefresh()
         }
+        scheduleDailyReset()
     }
 
     func calculateOverallTrainingScore() -> Double {
@@ -138,6 +141,7 @@ class HealthManager: ObservableObject {
             HKObjectType.quantityType(forIdentifier: .vo2Max)!,
             HKObjectType.quantityType(forIdentifier: .bodyMass)!,
             HKObjectType.quantityType(forIdentifier: .height)!,
+            HKObjectType.quantityType(forIdentifier: .dietaryWater)!,
             HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!,
             HKObjectType.workoutType() // Needed for HKWorkout (includes totalDistance)
         ]
@@ -164,6 +168,32 @@ class HealthManager: ObservableObject {
         }
     }
 
+    func scheduleDailyReset() {
+        resetTimer?.invalidate()
+        let now = Date()
+        let calendar = Calendar.current
+        if let nextMidnight = calendar.nextDate(after: now, matching: DateComponents(hour: 0, minute: 0, second: 0), matchingPolicy: .nextTime) {
+            let interval = nextMidnight.timeIntervalSince(now)
+            resetTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: false) { [weak self] _ in
+                guard let self = self else { return }
+                if let uid = Auth.auth().currentUser?.uid {
+                    self.saveDailyMetricsToFirestore(userId: uid)
+                }
+                self.resetDailyMetrics()
+                self.scheduleDailyReset()
+            }
+        }
+    }
+
+    private func resetDailyMetrics() {
+        activeCalories = nil
+        totalCalories = nil
+        exerciseMinutes = nil
+        distance = nil
+        steps = nil
+        waterIntake = nil
+    }
+
     func fetchAllData() {
         fetchActiveEnergyBurned { _ in self.save() }
         fetchTotalCalories { _ in self.save() }
@@ -185,6 +215,7 @@ class HealthManager: ObservableObject {
 
         fetchSleepData { _ in self.save() }
         fetchWorkouts { _ in self.save() }
+        fetchWaterIntake { _ in self.save() }
     }
 
 
@@ -208,6 +239,7 @@ class HealthManager: ObservableObject {
             "vo2Max": vo2Max ?? 0,
             "bodyMass": bodyMass ?? 0,
             "height": height ?? 0,
+            "waterIntake": waterIntake ?? 0,
             "trainingScore": calculateOverallTrainingScore(),
             "weeklyDistance": weeklyDistance ?? 0,
             "weeklyHours": weeklyHours ?? 0,
@@ -612,6 +644,23 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
             self.height = $0
             completion($0)
         }
+    }
+
+    func fetchWaterIntake(completion: @escaping (Double?) -> Void) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .dietaryWater) else {
+            return completion(nil)
+        }
+        let startOfDay = Calendar.current.startOfDay(for: Date())
+        let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: Date(), options: .strictStartDate)
+
+        let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, _ in
+            let liters = result?.sumQuantity()?.doubleValue(for: .liter())
+            DispatchQueue.main.async {
+                self.waterIntake = liters
+                completion(liters)
+            }
+        }
+        healthStore.execute(query)
     }
 
     func fetchSleepData(completion: @escaping (Double?) -> Void) {

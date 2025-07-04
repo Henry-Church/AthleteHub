@@ -144,9 +144,13 @@ struct NutritionView: View {
                 .padding(.horizontal)
 
                 WaterIntakeCard(
-                    intake:      userProfile.waterIntake  ?? "0",
+                    intake:      String(format: "%.1f", healthManager.waterIntake ?? Double(userProfile.waterIntake ?? "0") ?? 0),
                     goal:        userProfile.waterGoal    ?? "0",
-                    percentage:  userProfile.waterPercentage ?? "0%",
+                    percentage:  {
+                        let intake = healthManager.waterIntake ?? Double(userProfile.waterIntake ?? "0") ?? 0
+                        let goal = Double(userProfile.waterGoal ?? "0") ?? 1
+                        return "\(Int((intake / goal) * 100))%"
+                    }(),
                     colorScheme: colorScheme
                 ) {
                     activeMetric = .water
@@ -599,7 +603,13 @@ struct NutritionView: View {
             case .fat:
                 return AnyView(NutritionRingCard(title: "Fat", icon: "chart.pie.fill", value: userProfile.fatIntake ?? "0", goal: userProfile.fatGoal ?? "0 g", percentage: userProfile.fatPercentage ?? "0%", colorScheme: colorScheme))
             case .water:
-                return AnyView(WaterIntakeCard(intake: userProfile.waterIntake ?? "0", goal: userProfile.waterGoal ?? "0 L", percentage: userProfile.waterPercentage ?? "0%", colorScheme: colorScheme))
+                let value = String(format: "%.1f", healthManager.waterIntake ?? Double(userProfile.waterIntake ?? "0") ?? 0)
+                let pct = {
+                    let intake = healthManager.waterIntake ?? Double(userProfile.waterIntake ?? "0") ?? 0
+                    let goal = Double(userProfile.waterGoal ?? "0") ?? 1
+                    return "\(Int((intake / goal) * 100))%"
+                }()
+                return AnyView(WaterIntakeCard(intake: value, goal: userProfile.waterGoal ?? "0 L", percentage: pct, colorScheme: colorScheme))
             }
         }
         
@@ -609,7 +619,7 @@ struct NutritionView: View {
             case .protein:  return userProfile.proteinIntake ?? ""
             case .carbs:    return userProfile.carbsIntake ?? ""
             case .fat:      return userProfile.fatIntake ?? ""
-            case .water:    return userProfile.waterIntake ?? ""
+            case .water:    return String(format: "%.1f", healthManager.waterIntake ?? Double(userProfile.waterIntake ?? "") ?? 0)
             }
         }
         
@@ -619,7 +629,9 @@ struct NutritionView: View {
             case .protein:  userProfile.proteinIntake = value
             case .carbs:    userProfile.carbsIntake = value
             case .fat:      userProfile.fatIntake = value
-            case .water:    userProfile.waterIntake = value
+            case .water:
+                userProfile.waterIntake = value
+                healthManager.waterIntake = Double(value)
             }
             userProfile.loadFromFirestore()
         }
