@@ -219,6 +219,12 @@ struct NutritionView: View {
             default:       return .green
             }
         }
+
+        private func animateProgress() {
+            withAnimation(.easeOut(duration: 1.2)) {
+                animatedProgress = progress
+            }
+        }
         
         var body: some View {
             VStack(spacing: 16) {
@@ -267,11 +273,10 @@ struct NutritionView: View {
                         : Color(.systemBackground))
             .cornerRadius(16)
             .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
-            .onAppear {
-                withAnimation(.easeOut(duration: 1.2)) {
-                    animatedProgress = progress
-                }
-            }
+            .onAppear { animateProgress() }
+            .onChange(of: percentage) { _ in animateProgress() }
+            .onChange(of: value) { _ in animateProgress() }
+            .onChange(of: goal) { _ in animateProgress() }
             .onTapGesture { onTap() }
         }
     }
@@ -303,6 +308,12 @@ struct NutritionView: View {
         }
         private var remaining: Double {
             max(numericGoal - numericIntake, 0)
+        }
+
+        private func animateProgress() {
+            withAnimation(.easeOut(duration: 1.2)) {
+                animatedProgress = progress
+            }
         }
         
         var body: some View {
@@ -352,11 +363,10 @@ struct NutritionView: View {
                         : Color(.systemBackground))
             .cornerRadius(16)
             .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
-            .onAppear {
-                withAnimation(.easeOut(duration: 1.2)) {
-                    animatedProgress = progress
-                }
-            }
+            .onAppear { animateProgress() }
+            .onChange(of: percentage) { _ in animateProgress() }
+            .onChange(of: intake) { _ in animateProgress() }
+            .onChange(of: goal) { _ in animateProgress() }
             .onTapGesture { onTap() }
         }
     }
