@@ -272,6 +272,11 @@ struct NutritionView: View {
                     animatedProgress = progress
                 }
             }
+            .onChange(of: percentage) { _ in
+                withAnimation(.easeOut(duration: 1.2)) {
+                    animatedProgress = progress
+                }
+            }
             .onTapGesture { onTap() }
         }
     }
@@ -353,6 +358,11 @@ struct NutritionView: View {
             .cornerRadius(16)
             .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
             .onAppear {
+                withAnimation(.easeOut(duration: 1.2)) {
+                    animatedProgress = progress
+                }
+            }
+            .onChange(of: percentage) { _ in
                 withAnimation(.easeOut(duration: 1.2)) {
                     animatedProgress = progress
                 }
