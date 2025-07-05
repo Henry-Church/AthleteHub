@@ -184,6 +184,9 @@ struct NutritionView: View {
                     .environmentObject(userProfile)
                     .environmentObject(healthManager)
             }
+            .onAppear {
+                userProfile.resetDailyNutritionIfNeeded()
+            }
         }
     }
     
