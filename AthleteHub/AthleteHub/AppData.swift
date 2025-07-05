@@ -132,17 +132,24 @@ class UserProfile: ObservableObject {
     private let lastResetKey = "lastNutritionResetDate"
 
     /// Reset daily nutrition fields if the stored date is not today.
+    ///
+    /// This ensures metrics such as calories or water intake start at zero each
+    /// day while persistent attributes like height, weight or age remain
+    /// unchanged. The logged meals array is also cleared so that meals do not
+    /// carry over into the following day.
     func resetDailyNutritionIfNeeded() {
         let last = UserDefaults.standard.object(forKey: lastResetKey) as? Date ?? .distantPast
-        if !Calendar.current.isDateInToday(last) {
-            caloriesConsumed = "0"
-            proteinIntake = "0"
-            carbsIntake = "0"
-            fatIntake = "0"
-            waterIntake = "0"
-            fiberIntake = "0"
-            UserDefaults.standard.set(Date(), forKey: lastResetKey)
-        }
+        guard !Calendar.current.isDateInToday(last) else { return }
+
+        caloriesConsumed = "0"
+        proteinIntake = "0"
+        carbsIntake = "0"
+        fatIntake = "0"
+        waterIntake = "0"
+        fiberIntake = "0"
+        meals.removeAll()
+
+        UserDefaults.standard.set(Date(), forKey: lastResetKey)
     }
     
     // MARK: - Percentage Calculations
