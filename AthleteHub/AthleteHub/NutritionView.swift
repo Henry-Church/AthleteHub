@@ -184,6 +184,9 @@ struct NutritionView: View {
                     .environmentObject(userProfile)
                     .environmentObject(healthManager)
             }
+            .onAppear {
+                userProfile.resetDailyNutritionIfNeeded()
+            }
         }
     }
     
@@ -732,7 +735,7 @@ struct NutritionView: View {
                     userProfile.fatGoal = fatGoal
                     userProfile.waterGoal = waterGoal
                     userProfile.fiberGoal = fiberGoal
-                    userProfile.loadFromFirestore()
+                    userProfile.saveGoalsToFirestore()
                     presentationMode.wrappedValue.dismiss()
                 })
                 .onAppear {

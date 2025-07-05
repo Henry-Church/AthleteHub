@@ -241,48 +241,69 @@ class HealthManager: ObservableObject {
         let dateString = formatter.string(from: today)
 
         let recovery = calculateOverallRecoveryScore()
+        let trainingScore = calculateOverallTrainingScore()
 
-        let metrics: [String: Any] = [
+        let dayDoc = db.collection("users")
+            .document(userId)
+            .collection("days")
+            .document(dateString)
+
+        dayDoc.setData([
             "date": dateString,
+            "trainingScore": trainingScore,
+            "recoveryScore": recovery
+        ], merge: true) { error in
+            if let error = error {
+                print("❌ Error saving day summary: \(error.localizedDescription)")
+            } else {
+                print("✅ Saved summary for \(dateString)")
+                self.updateDailyTrainingScore(Int(trainingScore))
+            }
+        }
+
+        let trainingMetrics: [String: Any] = [
             "activeCalories": activeCalories ?? 0,
             "totalCalories": totalCalories ?? 0,
             "exerciseMinutes": exerciseMinutes ?? 0,
             "distance": distance ?? 0,
-            "restingHeartRate": restingHeartRate ?? 0,
-            "hrv": hrv ?? 0,
             "steps": steps ?? 0,
             "vo2Max": vo2Max ?? 0,
             "bodyMass": bodyMass ?? 0,
             "height": height ?? 0,
-            "waterIntake": waterIntake ?? 0,
-            "caloriesConsumed": caloriesConsumed ?? 0,
-            "proteinIntake": proteinIntake ?? 0,
-            "carbsIntake": carbsIntake ?? 0,
-            "fatIntake": fatIntake ?? 0,
-            "fiberIntake": fiberIntake ?? 0,
-            "trainingScore": calculateOverallTrainingScore(),
             "weeklyDistance": weeklyDistance ?? 0,
-            "weeklyHours": weeklyHours ?? 0,
+            "weeklyHours": weeklyHours ?? 0
+        ]
+
+        dayDoc.collection("training")
+            .document("metrics")
+            .setData(trainingMetrics, merge: true)
+
+        let recoveryMetrics: [String: Any] = [
+            "restingHeartRate": restingHeartRate ?? 0,
+            "hrv": hrv ?? 0,
             "sleepDuration": sleepDuration ?? 0,
             "sleepQuality": sleepQuality,
             "sleepQualityScore": sleepQualityScore ?? 0,
             "stressLevel": stressLevel ?? 0,
-            "recoveryScore": recovery,
             "hrvWeek": hrvWeek,
             "bloodOxygen": bloodOxygen ?? 0,
             "bloodOxygenWeek": bloodOxygenWeek
         ]
 
-        db.collection("users").document(userId)
-            .collection("dailyMetrics").document(dateString)
-            .setData(metrics, merge: true) { error in
-                if let error = error {
-                    print("❌ Error saving daily metrics: \(error.localizedDescription)")
-                } else {
-                    print("✅ Saved metrics for \(dateString)")
-                    self.updateDailyTrainingScore(Int(self.calculateOverallTrainingScore()))
-                }
-            }
+        dayDoc.collection("recovery").document("metrics")
+            .setData(recoveryMetrics, merge: true)
+
+        let nutritionMetrics: [String: Any] = [
+            "waterIntake": waterIntake ?? 0,
+            "caloriesConsumed": caloriesConsumed ?? 0,
+            "proteinIntake": proteinIntake ?? 0,
+            "carbsIntake": carbsIntake ?? 0,
+            "fatIntake": fatIntake ?? 0,
+            "fiberIntake": fiberIntake ?? 0
+        ]
+
+        dayDoc.collection("nutrition").document("metrics")
+            .setData(nutritionMetrics, merge: true)
     }
     
     
@@ -384,7 +405,13 @@ class HealthManager: ObservableObject {
             "timestamp": Timestamp(date: date)
         ]
 
-        db.collection("users").document(userId).collection("recovery").document(dateFormatter.string(from: date)).setData(recoveryData, merge: true)
+        db.collection("users")
+            .document(userId)
+            .collection("days")
+            .document(dateFormatter.string(from: date))
+            .collection("recovery")
+            .document("metrics")
+            .setData(recoveryData, merge: true)
 
         // also update aggregated daily metrics
         saveDailyMetricsToFirestore(userId: userId)
@@ -924,7 +951,7 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
 
         db.collection("users")
             .document(uid)
-            .collection("dailyMetrics")
+            .collection("days")
             .whereField("date", isGreaterThanOrEqualTo: startString)
             .order(by: "date", descending: false)
             .addSnapshotListener { snapshot, _ in
@@ -954,11 +981,34 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
     func setGoal(for metric: String, value: Double) {
         dailyGoals[metric] = value
         UserDefaults.standard.set(dailyGoals, forKey: "dailyGoals")
+
+        if let uid = Auth.auth().currentUser?.uid {
+            db.collection("users")
+                .document(uid)
+                .collection("profile")
+                .document("goals")
+                .setData([metric: value], merge: true)
+        }
     }
 
     func loadGoals() {
         if let saved = UserDefaults.standard.dictionary(forKey: "dailyGoals") as? [String: Double] {
             dailyGoals = saved
+        }
+
+        if let uid = Auth.auth().currentUser?.uid {
+            db.collection("users")
+                .document(uid)
+                .collection("profile")
+                .document("goals")
+                .getDocument { snapshot, _ in
+                    if let data = snapshot?.data() as? [String: Double] {
+                        DispatchQueue.main.async {
+                            self.dailyGoals = data
+                            UserDefaults.standard.set(data, forKey: "dailyGoals")
+                        }
+                    }
+                }
         }
     }
     
@@ -980,8 +1030,10 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
         let ref = Firestore.firestore()
             .collection("users")
             .document(userId)
-            .collection("metrics")
+            .collection("days")
             .document(todayKey)
+            .collection("recovery")
+            .document("metrics")
 
         let data: [String: Any] = [
             "sleepDuration": duration,
