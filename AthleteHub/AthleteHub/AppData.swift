@@ -196,13 +196,16 @@ class UserProfile: ObservableObject {
     }
     
     // MARK: - Firestore Integration
+    /// Load persistent profile data and nutrition goals from Firestore.
     func loadFromFirestore() {
         guard let currentUser = Auth.auth().currentUser else { return }
         self.uid = currentUser.uid
         self.email = currentUser.email ?? ""
-        
+
         let db = Firestore.firestore()
-        db.collection("users").document(uid).getDocument { snapshot, error in
+        let profileRef = db.collection("users").document(uid).collection("profile")
+
+        profileRef.document("info").getDocument { snapshot, _ in
             if let data = snapshot?.data() {
                 DispatchQueue.main.async {
                     self.name = data["name"] as? String ?? self.name
@@ -213,56 +216,65 @@ class UserProfile: ObservableObject {
                     self.height = data["height"] as? Double ?? self.height
                     self.weight = data["weight"] as? Double ?? self.weight
                     self.age = data["age"] as? Int ?? self.age
-                    
-                    self.sleepDuration = data["sleepDuration"] as? String
-                    self.sleepDurationStatus = data["sleepDurationStatus"] as? String
-                    self.sleepDurationDescription = data["sleepDurationDescription"] as? String
-                    self.sleepQuality = data["sleepQuality"] as? String
-                    self.sleepQualityStatus = data["sleepQualityStatus"] as? String
-                    self.sleepQualityDescription = data["sleepQualityDescription"] as? String
-                    self.stressLevel = data["stressLevel"] as? String
-                    self.stressLevelStatus = data["stressLevelStatus"] as? String
-                    self.stressLevelDescription = data["stressLevelDescription"] as? String
-                    self.restingHeartRate = data["restingHeartRate"] as? String
-                    self.restingHeartRateStatus = data["restingHeartRateStatus"] as? String
-                    self.restingHeartRateDescription = data["restingHeartRateDescription"] as? String
-                    self.hrv = data["hrv"] as? String
-                    self.hrvStatus = data["hrvStatus"] as? String
-                    self.hrvDescription = data["hrvDescription"] as? String
-                    self.overallRecoveryScore = data["overallRecoveryScore"] as? String
-                    self.overallRecoveryStatus = data["overallRecoveryStatus"] as? String
-                    self.overallRecoveryDescription = data["overallRecoveryDescription"] as? String
-                    self.recoveryTrendsAvailable = data["recoveryTrendsAvailable"] as? Bool ?? false
-                    self.sleepPhaseAnalysisAvailable = data["sleepPhaseAnalysisAvailable"] as? Bool ?? false
-                    
-                    self.caloriesConsumed = data["caloriesConsumed"] as? String
-                    self.caloriesGoal = data["caloriesGoal"] as? String
-                    self.caloriesStatus = data["caloriesStatus"] as? String
-                    self.caloriesDescription = data["caloriesDescription"] as? String
-                    
-                    self.proteinIntake = data["proteinIntake"] as? String
-                    self.proteinGoal = data["proteinGoal"] as? String
-                    self.proteinStatus = data["proteinStatus"] as? String
-                    self.proteinDescription = data["proteinDescription"] as? String
-                    
-                    self.carbsIntake = data["carbsIntake"] as? String
-                    self.carbsGoal = data["carbsGoal"] as? String
-                    self.carbsStatus = data["carbsStatus"] as? String
-                    self.carbsDescription = data["carbsDescription"] as? String
-                    
-                    self.fatIntake = data["fatIntake"] as? String
-                    self.fatGoal = data["fatGoal"] as? String
-                    self.fatStatus = data["fatStatus"] as? String
-                    self.fatDescription = data["fatDescription"] as? String
-                    
-                    self.waterIntake = data["waterIntake"] as? String
-                    self.waterGoal = data["waterGoal"] as? String
-                    self.waterStatus = data["waterStatus"] as? String
-                    self.waterDescription = data["waterDescription"] as? String
-
-                    self.resetDailyNutritionIfNeeded()
                 }
             }
         }
+
+        profileRef.document("goals").getDocument { snapshot, _ in
+            if let data = snapshot?.data() {
+                DispatchQueue.main.async {
+                    self.caloriesGoal = data["caloriesGoal"] as? String ?? self.caloriesGoal
+                    self.proteinGoal = data["proteinGoal"] as? String ?? self.proteinGoal
+                    self.carbsGoal = data["carbsGoal"] as? String ?? self.carbsGoal
+                    self.fatGoal = data["fatGoal"] as? String ?? self.fatGoal
+                    self.waterGoal = data["waterGoal"] as? String ?? self.waterGoal
+                    self.fiberGoal = data["fiberGoal"] as? String ?? self.fiberGoal
+                }
+            }
+        }
+
+        resetDailyNutritionIfNeeded()
+    }
+
+    /// Persist core profile fields to Firestore under `profile/info`.
+    func saveToFirestore() {
+        guard !uid.isEmpty else { return }
+        let data: [String: Any] = [
+            "name": name,
+            "role": role,
+            "phone": phone,
+            "birthDate": birthDate,
+            "sex": sex,
+            "height": height,
+            "weight": weight,
+            "age": age
+        ]
+
+        Firestore.firestore()
+            .collection("users")
+            .document(uid)
+            .collection("profile")
+            .document("info")
+            .setData(data, merge: true)
+    }
+
+    /// Save all nutrition goal values under `profile/goals`.
+    func saveGoalsToFirestore() {
+        guard !uid.isEmpty else { return }
+        let data: [String: Any] = [
+            "caloriesGoal": caloriesGoal ?? "",
+            "proteinGoal": proteinGoal ?? "",
+            "carbsGoal": carbsGoal ?? "",
+            "fatGoal": fatGoal ?? "",
+            "waterGoal": waterGoal ?? "",
+            "fiberGoal": fiberGoal ?? ""
+        ]
+
+        Firestore.firestore()
+            .collection("users")
+            .document(uid)
+            .collection("profile")
+            .document("goals")
+            .setData(data, merge: true)
     }
 }

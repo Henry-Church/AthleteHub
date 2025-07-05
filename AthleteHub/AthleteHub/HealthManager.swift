@@ -261,7 +261,7 @@ class HealthManager: ObservableObject {
             }
         }
 
-        let trainingMetrics: [String: Any] = [
+       let trainingMetrics: [String: Any] = [
     "activeCalories": activeCalories ?? 0,
     "totalCalories": totalCalories ?? 0,
     "exerciseMinutes": exerciseMinutes ?? 0,
@@ -275,7 +275,8 @@ class HealthManager: ObservableObject {
 ]
 
 // Save metrics to the day's document
-dayDoc.collection("training").document("metrics")
+dayDoc.collection("training")
+    .document("metrics")
     .setData(trainingMetrics, merge: true)
 
 // Also save to user's trainingMetrics collection for historical tracking
@@ -284,6 +285,7 @@ db.collection("users")
     .collection("trainingMetrics")
     .document(dateString)
     .setData(trainingMetrics, merge: true)
+
 
         let recoveryMetrics: [String: Any] = [
             "restingHeartRate": restingHeartRate ?? 0,
@@ -412,7 +414,13 @@ db.collection("users")
             "timestamp": Timestamp(date: date)
         ]
 
-        db.collection("users").document(userId).collection("recovery").document(dateFormatter.string(from: date)).setData(recoveryData, merge: true)
+        db.collection("users")
+            .document(userId)
+            .collection("days")
+            .document(dateFormatter.string(from: date))
+            .collection("recovery")
+            .document("metrics")
+            .setData(recoveryData, merge: true)
 
         // also update aggregated daily metrics
         saveDailyMetricsToFirestore(userId: userId)
@@ -982,11 +990,34 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
     func setGoal(for metric: String, value: Double) {
         dailyGoals[metric] = value
         UserDefaults.standard.set(dailyGoals, forKey: "dailyGoals")
+
+        if let uid = Auth.auth().currentUser?.uid {
+            db.collection("users")
+                .document(uid)
+                .collection("profile")
+                .document("goals")
+                .setData([metric: value], merge: true)
+        }
     }
 
     func loadGoals() {
         if let saved = UserDefaults.standard.dictionary(forKey: "dailyGoals") as? [String: Double] {
             dailyGoals = saved
+        }
+
+        if let uid = Auth.auth().currentUser?.uid {
+            db.collection("users")
+                .document(uid)
+                .collection("profile")
+                .document("goals")
+                .getDocument { snapshot, _ in
+                    if let data = snapshot?.data() as? [String: Double] {
+                        DispatchQueue.main.async {
+                            self.dailyGoals = data
+                            UserDefaults.standard.set(data, forKey: "dailyGoals")
+                        }
+                    }
+                }
         }
     }
     
@@ -1008,8 +1039,10 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
         let ref = Firestore.firestore()
             .collection("users")
             .document(userId)
-            .collection("metrics")
+            .collection("days")
             .document(todayKey)
+            .collection("recovery")
+            .document("metrics")
 
         let data: [String: Any] = [
             "sleepDuration": duration,
