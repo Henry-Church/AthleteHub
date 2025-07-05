@@ -195,89 +195,98 @@ struct NutritionView: View {
     
     // MARK: - NutritionRingCard
     
-    struct NutritionRingCard: View {
-        let title: String
-        let icon: String
-        let value: String       // e.g. "1,200 kcal"
-        let goal: String        // e.g. "2,000 kcal"
-        let percentage: String  // e.g. "60%"
-        let colorScheme: ColorScheme
-        var onTap: () -> Void = {}
-        
-        @State private var animatedProgress: Double = 0
-        
-        // 0…1
-        private var progress: Double {
-            (Double(percentage.replacingOccurrences(of: "%", with: "")) ?? 0) / 100
-        }
-        
-        // map progress → red/yellow/green
-        private var ringColor: Color {
-            switch progress {
-            case ..<0.5:   return .red
-            case ..<0.8:   return .yellow
-            default:       return .green
-            }
-        }
+struct NutritionRingCard: View {
+    let title: String
+    let icon: String
+    let value: String       // e.g. "1,200 kcal"
+    let goal: String        // e.g. "2,000 kcal"
+    let percentage: String  // e.g. "60%"
+    let colorScheme: ColorScheme
+    var onTap: () -> Void = {}
 
-        private func animateProgress() {
-            withAnimation(.easeOut(duration: 1.2)) {
-                animatedProgress = progress
-            }
-        }
-        
-        var body: some View {
-            VStack(spacing: 16) {
-                HStack {
-                    Label(title, systemImage: icon)
-                        .font(.headline)
-                    Spacer()
-                }
-                
-                ZStack {
-                    // background track
-                    Circle()
-                        .stroke(Color.gray.opacity(0.2), lineWidth: 10)
-                        .frame(width: 100, height: 100)
-                    
-                    // progress arc
-                    Circle()
-                        .trim(from: 0, to: animatedProgress)
-                        .stroke(ringColor, style: StrokeStyle(lineWidth: 10, lineCap: .round))
-                        .rotationEffect(.degrees(-90))
-                        .frame(width: 100, height: 100)
-                    
-                    // center text
-                    VStack(spacing: 2) {
-                        Text(value)
-                            .font(.title2).bold()
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.5)
-                            .foregroundColor(ringColor)
-                        Text("/ \(goal)")
-                            .font(.caption)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.5)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                
-                Text("\(percentage) of daily target")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
-            .padding()
-            .frame(maxWidth: .infinity, minHeight: 180)
-            .background(colorScheme == .dark
-                        ? Color(.secondarySystemBackground)
-                        : Color(.systemBackground))
-            .cornerRadius(16)
-            .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
-            .onAppear { animateProgress() }
-            .onChange(of: progress) { _ in animateProgress() }
-            .onTapGesture { onTap() }
+    // 1) Fixed diameter for the ring
+    private let diameter: CGFloat = 100
+
+    @State private var animatedProgress: Double = 0
+
+    // 0…1
+    private var progress: Double {
+        (Double(percentage.replacingOccurrences(of: "%", with: "")) ?? 0) / 100
+    }
+
+    // map progress → red/yellow/green
+    private var ringColor: Color {
+        switch progress {
+        case ..<0.5:   return .red
+        case ..<0.8:   return .yellow
+        default:       return .green
         }
     }
+
+    private func animateProgress() {
+        withAnimation(.easeOut(duration: 1.2)) {
+            animatedProgress = progress
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 16) {
+          // Title row
+          HStack {
+            Label(title, systemImage: icon)
+              .font(.headline)
+            Spacer()
+          }
+
+          // Ring + center text
+          ZStack {
+            Circle()
+              .stroke(Color.gray.opacity(0.2), lineWidth: 10)
+              .frame(width: diameter, height: diameter)
+
+            Circle()
+              .trim(from: 0, to: animatedProgress)
+              .stroke(ringColor, style: StrokeStyle(lineWidth: 10, lineCap: .round))
+              .rotationEffect(.degrees(-90))
+              .frame(width: diameter, height: diameter)
+
+            // 2) Constrain text to 70% of diameter and allow tightening
+            VStack(spacing: 2) {
+              Text(value)
+                .font(.title2).bold()
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+                .allowsTightening(true)
+                .layoutPriority(1)
+                .frame(width: diameter * 0.7)
+
+              Text("/ \(goal)")
+                .font(.caption)
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+                .allowsTightening(true)
+                .frame(width: diameter * 0.7)
+                .foregroundColor(.secondary)
+            }
+          }
+
+          // Footer label
+          Text("\(percentage) of daily target")
+            .font(.caption2)
+            .foregroundColor(.secondary)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, minHeight: 180)
+        .background(colorScheme == .dark
+                    ? Color(.secondarySystemBackground)
+                    : Color(.systemBackground))
+        .cornerRadius(16)
+        .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
+        .onAppear { animateProgress() }
+        .onChange(of: progress) { _ in animateProgress() }
+        .onTapGesture { onTap() }
+    }
+}
     
     
     // MARK: - WaterIntakeCard
@@ -307,12 +316,12 @@ struct NutritionView: View {
         private var remaining: Double {
             max(numericGoal - numericIntake, 0)
         }
-
+        
         private func animateProgress() {
-            withAnimation(.easeOut(duration: 1.2)) {
-                animatedProgress = progress
-            }
-        }
+                    withAnimation(.easeOut(duration: 1.2)) {
+                        animatedProgress = progress
+                    }
+                }
         
         var body: some View {
             VStack(spacing: 16) {
