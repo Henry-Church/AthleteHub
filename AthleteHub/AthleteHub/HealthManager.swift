@@ -241,48 +241,74 @@ class HealthManager: ObservableObject {
         let dateString = formatter.string(from: today)
 
         let recovery = calculateOverallRecoveryScore()
+        let trainingScore = calculateOverallTrainingScore()
 
-        let metrics: [String: Any] = [
+        let dayDoc = db.collection("users")
+            .document(userId)
+            .collection("days")
+            .document(dateString)
+
+        dayDoc.setData([
             "date": dateString,
+            "trainingScore": trainingScore,
+            "recoveryScore": recovery
+        ], merge: true) { error in
+            if let error = error {
+                print("❌ Error saving day summary: \(error.localizedDescription)")
+            } else {
+                print("✅ Saved summary for \(dateString)")
+                self.updateDailyTrainingScore(Int(trainingScore))
+            }
+        }
+
+        let trainingMetrics: [String: Any] = [
             "activeCalories": activeCalories ?? 0,
             "totalCalories": totalCalories ?? 0,
             "exerciseMinutes": exerciseMinutes ?? 0,
             "distance": distance ?? 0,
-            "restingHeartRate": restingHeartRate ?? 0,
-            "hrv": hrv ?? 0,
             "steps": steps ?? 0,
             "vo2Max": vo2Max ?? 0,
             "bodyMass": bodyMass ?? 0,
             "height": height ?? 0,
-            "waterIntake": waterIntake ?? 0,
-            "caloriesConsumed": caloriesConsumed ?? 0,
-            "proteinIntake": proteinIntake ?? 0,
-            "carbsIntake": carbsIntake ?? 0,
-            "fatIntake": fatIntake ?? 0,
-            "fiberIntake": fiberIntake ?? 0,
-            "trainingScore": calculateOverallTrainingScore(),
             "weeklyDistance": weeklyDistance ?? 0,
-            "weeklyHours": weeklyHours ?? 0,
+            "weeklyHours": weeklyHours ?? 0
+        ]
+
+        dayDoc.collection("training").document("metrics")
+            .setData(trainingMetrics, merge: true)
+
+        db.collection("users")
+            .document(userId)
+            .collection("trainingMetrics")
+            .document(dateString)
+            .setData(trainingMetrics, merge: true)
+
+        let recoveryMetrics: [String: Any] = [
+            "restingHeartRate": restingHeartRate ?? 0,
+            "hrv": hrv ?? 0,
             "sleepDuration": sleepDuration ?? 0,
             "sleepQuality": sleepQuality,
             "sleepQualityScore": sleepQualityScore ?? 0,
             "stressLevel": stressLevel ?? 0,
-            "recoveryScore": recovery,
             "hrvWeek": hrvWeek,
             "bloodOxygen": bloodOxygen ?? 0,
             "bloodOxygenWeek": bloodOxygenWeek
         ]
 
-        db.collection("users").document(userId)
-            .collection("dailyMetrics").document(dateString)
-            .setData(metrics, merge: true) { error in
-                if let error = error {
-                    print("❌ Error saving daily metrics: \(error.localizedDescription)")
-                } else {
-                    print("✅ Saved metrics for \(dateString)")
-                    self.updateDailyTrainingScore(Int(self.calculateOverallTrainingScore()))
-                }
-            }
+        dayDoc.collection("recovery").document("metrics")
+            .setData(recoveryMetrics, merge: true)
+
+        let nutritionMetrics: [String: Any] = [
+            "waterIntake": waterIntake ?? 0,
+            "caloriesConsumed": caloriesConsumed ?? 0,
+            "proteinIntake": proteinIntake ?? 0,
+            "carbsIntake": carbsIntake ?? 0,
+            "fatIntake": fatIntake ?? 0,
+            "fiberIntake": fiberIntake ?? 0
+        ]
+
+        dayDoc.collection("nutrition").document("metrics")
+            .setData(nutritionMetrics, merge: true)
     }
     
     
@@ -924,7 +950,7 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
 
         db.collection("users")
             .document(uid)
-            .collection("dailyMetrics")
+            .collection("days")
             .whereField("date", isGreaterThanOrEqualTo: startString)
             .order(by: "date", descending: false)
             .addSnapshotListener { snapshot, _ in
