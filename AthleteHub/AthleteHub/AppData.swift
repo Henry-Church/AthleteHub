@@ -128,6 +128,22 @@ class UserProfile: ObservableObject {
     @Published var trainingLog: [String] = []
     @Published var meals: [String] = []
     @Published var recoveryActivities: [String] = []
+
+    private let lastResetKey = "lastNutritionResetDate"
+
+    /// Reset daily nutrition fields if the stored date is not today.
+    func resetDailyNutritionIfNeeded() {
+        let last = UserDefaults.standard.object(forKey: lastResetKey) as? Date ?? .distantPast
+        if !Calendar.current.isDateInToday(last) {
+            caloriesConsumed = "0"
+            proteinIntake = "0"
+            carbsIntake = "0"
+            fatIntake = "0"
+            waterIntake = "0"
+            fiberIntake = "0"
+            UserDefaults.standard.set(Date(), forKey: lastResetKey)
+        }
+    }
     
     // MARK: - Percentage Calculations
     private func recalcCaloriesPercentage() {
@@ -237,6 +253,7 @@ class UserProfile: ObservableObject {
                     self.waterStatus = data["waterStatus"] as? String
                     self.waterDescription = data["waterDescription"] as? String
 
+                    self.resetDailyNutritionIfNeeded()
                 }
             }
         }
