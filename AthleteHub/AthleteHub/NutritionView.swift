@@ -12,7 +12,6 @@ struct NutritionView: View {
     
     @State private var showingSetGoals = false
     @State private var showingManualEntry = false
-    @State private var activeMetric: MetricType?
     
     private func percentage(from text: String?) -> Double? {
         guard let stripped = text?.replacingOccurrences(of: "%", with: ""),
@@ -98,7 +97,6 @@ struct NutritionView: View {
                         percentage: userProfile.caloriesPercentage  ?? "0%",
                         colorScheme: colorScheme
                     ) {
-                        activeMetric = .calories
                         showingManualEntry = true
                     }
 
@@ -111,7 +109,6 @@ struct NutritionView: View {
                         percentage: userProfile.proteinPercentage  ?? "0%",
                         colorScheme: colorScheme
                     ) {
-                        activeMetric = .protein
                         showingManualEntry = true
                     }
 
@@ -124,7 +121,6 @@ struct NutritionView: View {
                         percentage: userProfile.carbsPercentage    ?? "0%",
                         colorScheme: colorScheme
                     ) {
-                        activeMetric = .carbs
                         showingManualEntry = true
                     }
 
@@ -137,7 +133,6 @@ struct NutritionView: View {
                         percentage: userProfile.fatPercentage      ?? "0%",
                         colorScheme: colorScheme
                     ) {
-                        activeMetric = .fat
                         showingManualEntry = true
                     }
                 }
@@ -153,7 +148,6 @@ struct NutritionView: View {
                     }(),
                     colorScheme: colorScheme
                 ) {
-                    activeMetric = .water
                     showingManualEntry = true
                 }
                 .padding(.horizontal)
@@ -181,11 +175,6 @@ struct NutritionView: View {
             }
             .sheet(isPresented: $showingManualEntry) {
                 ManualNutritionEntryView()
-                    .environmentObject(userProfile)
-                    .environmentObject(healthManager)
-            }
-            .sheet(item: $activeMetric) { metric in
-                MetricDetailView(metric: metric)
                     .environmentObject(userProfile)
                     .environmentObject(healthManager)
             }
@@ -487,39 +476,35 @@ struct NutritionView: View {
         
         var body: some View {
             NavigationView {
-                ScrollView {
-                    VStack(spacing: 16) {
+                Form {
+                    Section(header: Text("Meal")) {
                         TextField("Meal Name", text: $mealName)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                    }
 
-                        Group {
-                            TextField("Calories", text: $calories)
-                            TextField("Protein (g)", text: $protein)
-                            TextField("Carbs (g)", text: $carbs)
-                            TextField("Fat (g)", text: $fat)
-                            TextField("Water (L)", text: $water)
-                            TextField("Fiber (g)", text: $fiber)
-                        }
-                        .keyboardType(.decimalPad)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                    Section(header: Text("Nutrients")) {
+                        TextField("Calories", text: $calories)
+                            .keyboardType(.decimalPad)
+                        TextField("Protein (g)", text: $protein)
+                            .keyboardType(.decimalPad)
+                        TextField("Carbs (g)", text: $carbs)
+                            .keyboardType(.decimalPad)
+                        TextField("Fat (g)", text: $fat)
+                            .keyboardType(.decimalPad)
+                        TextField("Water (L)", text: $water)
+                            .keyboardType(.decimalPad)
+                        TextField("Fiber (g)", text: $fiber)
+                            .keyboardType(.decimalPad)
+                    }
 
+                    Section {
                         HStack {
                             Button("Reset") { resetFields() }
                                 .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.gray.opacity(0.2))
-                                .cornerRadius(12)
 
                             Button("Add Meal") { addMeal() }
                                 .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.green)
-                                .foregroundColor(.white)
-                                .cornerRadius(12)
                         }
-                        .padding(.top, 10)
                     }
-                    .padding()
                 }
                 .navigationTitle("Add Meal")
                 .navigationBarItems(trailing: Button("Cancel") {
@@ -576,153 +561,6 @@ struct NutritionView: View {
         }
     }
     
-    // MARK: - MetricType Enum
-    
-    enum MetricType: String, Identifiable {
-        case calories
-        case protein
-        case carbs
-        case fat
-        case water
-        
-        var id: String { rawValue }
-        
-        var title: String {
-            switch self {
-            case .calories: return "Calories"
-            case .protein:  return "Protein"
-            case .carbs:    return "Carbohydrates"
-            case .fat:      return "Fat"
-            case .water:    return "Water"
-            }
-        }
-    }
-    
-    // MARK: - MetricDetailView
-    
-    struct MetricDetailView: View {
-        let metric: MetricType
-        @EnvironmentObject var userProfile: UserProfile
-        @EnvironmentObject var healthManager: HealthManager
-        @Environment(\.presentationMode) var presentationMode
-        @Environment(\.colorScheme) var colorScheme
-        
-        @State private var value: String = ""
-        
-        var body: some View {
-            NavigationView {
-                VStack(spacing: 20) {
-                    metricCard
-                        .frame(height: 180)
-                    
-                    TextField("Enter \(metric.title)", text: $value)
-                        .keyboardType(.decimalPad)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .padding(.horizontal)
-                    
-                    Button("Save") {
-                        save()
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                    .padding()
-                    
-                    Spacer()
-                }
-                .navigationTitle(metric.title)
-                .navigationBarItems(trailing: Button("Close") {
-                    presentationMode.wrappedValue.dismiss()
-                })
-                .onAppear { value = currentValue }
-            }
-        }
-        
-        private var metricCard: some View {
-            switch metric {
-            case .calories:
-                return AnyView(NutritionRingCard(title: "Calories", icon: "flame.fill", value: userProfile.caloriesConsumed ?? "0", goal: userProfile.caloriesGoal ?? "0 cal", percentage: userProfile.caloriesPercentage ?? "0%", colorScheme: colorScheme))
-            case .protein:
-                return AnyView(NutritionRingCard(title: "Protein", icon: "bolt.fill", value: userProfile.proteinIntake ?? "0", goal: userProfile.proteinGoal ?? "0 g", percentage: userProfile.proteinPercentage ?? "0%", colorScheme: colorScheme))
-            case .carbs:
-                return AnyView(NutritionRingCard(title: "Carbohydrates", icon: "leaf.fill", value: userProfile.carbsIntake ?? "0", goal: userProfile.carbsGoal ?? "0 g", percentage: userProfile.carbsPercentage ?? "0%", colorScheme: colorScheme))
-            case .fat:
-                return AnyView(NutritionRingCard(title: "Fat", icon: "chart.pie.fill", value: userProfile.fatIntake ?? "0", goal: userProfile.fatGoal ?? "0 g", percentage: userProfile.fatPercentage ?? "0%", colorScheme: colorScheme))
-            case .water:
-                let value = String(format: "%.1f", healthManager.waterIntake ?? Double(userProfile.waterIntake ?? "0") ?? 0)
-                let pct = {
-                    let intake = healthManager.waterIntake ?? Double(userProfile.waterIntake ?? "0") ?? 0
-                    let goal = Double(userProfile.waterGoal ?? "0") ?? 1
-                    return "\(Int((intake / goal) * 100))%"
-                }()
-                return AnyView(WaterIntakeCard(intake: value, goal: userProfile.waterGoal ?? "0 L", percentage: pct, colorScheme: colorScheme))
-            }
-        }
-        
-        private var currentValue: String {
-            switch metric {
-            case .calories: return userProfile.caloriesConsumed ?? ""
-            case .protein:  return userProfile.proteinIntake ?? ""
-            case .carbs:    return userProfile.carbsIntake ?? ""
-            case .fat:      return userProfile.fatIntake ?? ""
-            case .water:    return String(format: "%.1f", healthManager.waterIntake ?? Double(userProfile.waterIntake ?? "") ?? 0)
-            }
-        }
-        
-        private func save() {
-            switch metric {
-            case .calories:
-                userProfile.caloriesConsumed = value
-                healthManager.saveDailyNutritionEntry(
-                    calories: Double(value),
-                    protein: nil,
-                    carbs: nil,
-                    fat: nil,
-                    water: nil,
-                    fiber: nil
-                )
-            case .protein:
-                userProfile.proteinIntake = value
-                healthManager.saveDailyNutritionEntry(
-                    calories: nil,
-                    protein: Double(value),
-                    carbs: nil,
-                    fat: nil,
-                    water: nil,
-                    fiber: nil
-                )
-            case .carbs:
-                userProfile.carbsIntake = value
-                healthManager.saveDailyNutritionEntry(
-                    calories: nil,
-                    protein: nil,
-                    carbs: Double(value),
-                    fat: nil,
-                    water: nil,
-                    fiber: nil
-                )
-            case .fat:
-                userProfile.fatIntake = value
-                healthManager.saveDailyNutritionEntry(
-                    calories: nil,
-                    protein: nil,
-                    carbs: nil,
-                    fat: Double(value),
-                    water: nil,
-                    fiber: nil
-                )
-            case .water:
-                userProfile.waterIntake = value
-                healthManager.saveDailyNutritionEntry(
-                    calories: nil,
-                    protein: nil,
-                    carbs: nil,
-                    fat: nil,
-                    water: Double(value),
-                    fiber: nil
-                )
-            }
-            userProfile.loadFromFirestore()
-        }
-    }
     
     // MARK: - SetNutritionGoalsView
     
