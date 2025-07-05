@@ -261,22 +261,31 @@ class HealthManager: ObservableObject {
             }
         }
 
-        let trainingMetrics: [String: Any] = [
-            "activeCalories": activeCalories ?? 0,
-            "totalCalories": totalCalories ?? 0,
-            "exerciseMinutes": exerciseMinutes ?? 0,
-            "distance": distance ?? 0,
-            "steps": steps ?? 0,
-            "vo2Max": vo2Max ?? 0,
-            "bodyMass": bodyMass ?? 0,
-            "height": height ?? 0,
-            "weeklyDistance": weeklyDistance ?? 0,
-            "weeklyHours": weeklyHours ?? 0
-        ]
+       let trainingMetrics: [String: Any] = [
+    "activeCalories": activeCalories ?? 0,
+    "totalCalories": totalCalories ?? 0,
+    "exerciseMinutes": exerciseMinutes ?? 0,
+    "distance": distance ?? 0,
+    "steps": steps ?? 0,
+    "vo2Max": vo2Max ?? 0,
+    "bodyMass": bodyMass ?? 0,
+    "height": height ?? 0,
+    "weeklyDistance": weeklyDistance ?? 0,
+    "weeklyHours": weeklyHours ?? 0
+]
 
-        dayDoc.collection("training")
-            .document("metrics")
-            .setData(trainingMetrics, merge: true)
+// Save metrics to the day's document
+dayDoc.collection("training")
+    .document("metrics")
+    .setData(trainingMetrics, merge: true)
+
+// Also save to user's trainingMetrics collection for historical tracking
+db.collection("users")
+    .document(userId)
+    .collection("trainingMetrics")
+    .document(dateString)
+    .setData(trainingMetrics, merge: true)
+
 
         let recoveryMetrics: [String: Any] = [
             "restingHeartRate": restingHeartRate ?? 0,
