@@ -1,3 +1,8 @@
+
+New
++198
+-0
+
 import SwiftUI
 
 struct TrainingCalendarView: View {
@@ -25,12 +30,39 @@ struct TrainingCalendarView: View {
         return Array(symbols[firstWeekday...] + symbols[..<firstWeekday])
     }
 
-    private var monthDates: [Date] {
+    private var weekdayDateFormatter: DateFormatter {
+        let f = DateFormatter()
+        f.dateFormat = "E MMM d"
+        return f
+    }
+
+    private var currentWeekDates: [Date] {
         let calendar = Calendar.current
-        let firstOfMonth = calendar.startOfMonth(for: displayedMonth)
-        let weekday = calendar.component(.weekday, from: firstOfMonth)
-        let start = calendar.date(byAdding: .day, value: -(weekday - calendar.firstWeekday), to: firstOfMonth) ?? firstOfMonth
-        return (0..<42).compactMap { calendar.date(byAdding: .day, value: $0, to: start) }
+        guard let start = calendar.dateInterval(of: .weekOfYear, for: Date())?.start else {
+            return []
+        }
+        return (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: start) }
+    }
+
+    private var daysInMonth: Int {
+        Calendar.current.range(of: .day, in: .month, for: displayedMonth)?.count ?? 30
+    }
+
+    private var leadingSpaces: Int {
+        let firstOfMonth = Calendar.current.startOfMonth(for: displayedMonth)
+        let weekday = Calendar.current.component(.weekday, from: firstOfMonth)
+        return (weekday - Calendar.current.firstWeekday + 7) % 7
+    }
+
+    private var monthDates: [Date?] {
+        let firstOfMonth = Calendar.current.startOfMonth(for: displayedMonth)
+        var dates: [Date?] = Array(repeating: nil, count: leadingSpaces)
+        for i in 0..<min(daysInMonth, 31) {
+            if let d = Calendar.current.date(byAdding: .day, value: i, to: firstOfMonth) {
+                dates.append(d)
+            }
+        }
+        return dates
     }
 
     private func trainings(for date: Date) -> [ScheduledTraining] {
@@ -69,27 +101,51 @@ struct TrainingCalendarView: View {
                         .foregroundColor(.secondary)
                 }
 
-                ForEach(monthDates, id: \.self) { date in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(dayFormatter.string(from: date))
+                ForEach(Array(monthDates.enumerated()), id: \.offset) { index, date in
+                    if let date = date {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(dayFormatter.string(from: date))
+                                .font(.caption)
+                                .foregroundColor(isCurrentMonth(date) ? .primary : .secondary)
+                            ForEach(trainings(for: date)) { t in
+                                Text(t.title)
+                                    .font(.caption2)
+                                    .lineLimit(2)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            Spacer(minLength: 0)
+                        }
+                        .padding(6)
+                        .frame(minHeight: 80, alignment: .topLeading)
+                        .background(Color(.secondarySystemBackground))
+                        .cornerRadius(8)
+                        .onTapGesture {
+                            selectedDate = date
+                            showingAddSheet = true
+                        }
+                    } else {
+                        Color.clear.frame(height: 80)
+                    }
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("This Week")
+                    .font(.headline)
+                    .padding(.top)
+
+                ForEach(currentWeekDates, id: \.self) { date in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(weekdayDateFormatter.string(from: date))
                             .font(.caption)
-                            .foregroundColor(isCurrentMonth(date) ? .primary : .secondary)
                         ForEach(trainings(for: date)) { t in
                             Text(t.title)
                                 .font(.caption2)
                                 .lineLimit(2)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        Spacer(minLength: 0)
                     }
-                    .padding(6)
-                    .frame(minHeight: 80, alignment: .topLeading)
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(8)
-                    .onTapGesture {
-                        selectedDate = date
-                        showingAddSheet = true
-                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
         }
