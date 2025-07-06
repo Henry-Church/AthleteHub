@@ -1,3 +1,8 @@
+
+New
++198
+-0
+
 import SwiftUI
 
 struct TrainingCalendarView: View {
