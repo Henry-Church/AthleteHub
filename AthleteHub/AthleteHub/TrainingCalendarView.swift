@@ -3,7 +3,51 @@ struct TrainingCalendarView: View {
     @EnvironmentObject var scheduleManager: TrainingScheduleManager
     @State private var selectedDate = Date()
     @State private var showingAddSheet = false
+  
+  
+    private var shortFormatter: DateFormatter {
+        let f = DateFormatter()
+        f.dateFormat = "E d"
+        return f
+    }
 
+    private var startOfWeek: Date {
+        Calendar.current.dateInterval(of: .weekOfYear, for: Date())?.start ?? Date()
+    }
+
+    private var upcomingDates: [Date] {
+        (0..<14).compactMap { Calendar.current.date(byAdding: .day, value: $0, to: startOfWeek) }
+    }
+
+    private func trainings(for date: Date) -> [ScheduledTraining] {
+        scheduleManager.trainings.filter { Calendar.current.isDate($0.date, inSameDayAs: date) }
+    }
+
+    var body: some View {
+        let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 7)
+        LazyVGrid(columns: columns, spacing: 12) {
+            ForEach(upcomingDates, id: \.self) { date in
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(shortFormatter.string(from: date))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    ForEach(trainings(for: date)) { t in
+                        Text(t.title)
+                            .font(.caption2)
+                            .lineLimit(2)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    Spacer(minLength: 0)
+                }
+                .padding(6)
+                .frame(minHeight: 80, alignment: .topLeading)
+                .background(Color(.secondarySystemBackground))
+                .cornerRadius(8)
+                .onTapGesture {
+                    selectedDate = date
+                    showingAddSheet = true
+                  
+                  
     private var dayFormatter: DateFormatter {
         let f = DateFormatter()
         f.dateFormat = "E, MMM d"
@@ -22,177 +66,46 @@ struct TrainingCalendarView: View {
         }
     }
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            ForEach(upcomingDates, id: \.self) { date in
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text(dayFormatter.string(from: date))
-                            .font(.headline)
-                        Spacer()
-                        Button(action: {
-                            selectedDate = date
-                            showingAddSheet = true
-                        }) {
-                            Image(systemName: "plus.circle")
-                        }
-                    }
-
-                    if trainings(for: date).isEmpty {
-                        Text("No trainings")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                    } else {
-                        ForEach(trainings(for: date)) { t in
-                            Text(t.title)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(4)
-                                .background(Color(.secondarySystemBackground))
-                                .cornerRadius(4)
-                        }
-                    }
-                }
-            }
-        }
-        .padding()
-        .sheet(isPresented: $showingAddSheet) {
-            AddTrainingView(date: selectedDate)
-                .environmentObject(scheduleManager)
-        }
-    }
-}
-
-struct TrainingCalendarView: View {
-    @EnvironmentObject var scheduleManager: TrainingScheduleManager
-    @State private var displayedMonth = Date()
-    @State private var selectedDate = Date()
-    @State private var showingAddSheet = false
-
-    // MARK: – Computed Properties
-
-    private var monthTitle: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "LLLL yyyy"
-        return formatter.string(from: displayedMonth)
-    }
-
-    private func trainings(for date: Date) -> [ScheduledTraining] {
-        scheduleManager.trainings.filter {
-            Calendar.current.isDate($0.date, inSameDayAs: date)
-        }
-    }
-
-    private func daysForMonth() -> [Date?] {
-        guard
-            let monthFirstDay = Calendar.current.date(
-                from: Calendar.current.dateComponents([.year, .month], from: displayedMonth)
-            )
-        else { return [] }
-
-        let daysRange = Calendar.current.range(
-            of: .day,
-            in: .month,
-            for: displayedMonth
-        ) ?? 1...30
-
-        let firstWeekday = Calendar.current.component(.weekday, from: monthFirstDay)
-        let leadingEmpty = (firstWeekday - Calendar.current.firstWeekday + 7) % 7
-
-        var days: [Date?] = Array(repeating: nil, count: leadingEmpty)
-        days += daysRange.compactMap {
-            Calendar.current.date(byAdding: .day, value: $0 - 1, to: monthFirstDay)
-        }
-
-        let rows = Int(ceil(Double(days.count) / 7.0))
-        days += Array(repeating: nil, count: rows * 7 - days.count)
-        return days
-    }
-
 var body: some View {
-    VStack(alignment: .leading, spacing: 12) {
-        // Month navigation
-        HStack {
-            Button(action: {
-                displayedMonth = Calendar.current.date(
-                    byAdding: .month,
-                    value: -1,
-                    to: displayedMonth
-                ) ?? displayedMonth
-            }) {
-                Image(systemName: "chevron.left")
-            }
-            Spacer()
-            Text(monthTitle)
-                .font(.headline)
-            Spacer()
-            Button(action: {
-                displayedMonth = Calendar.current.date(
-                    byAdding: .month,
-                    value: 1,
-                    to: displayedMonth
-                ) ?? displayedMonth
-            }) {
-                Image(systemName: "chevron.right")
-            }
-        }
-        .padding(.horizontal)
-
-        // Weekday headers + day grid
-        let columns = Array(repeating: GridItem(.flexible()), count: 7)
-        LazyVGrid(columns: columns, spacing: 8) {
-            ForEach(["Sun","Mon","Tue","Wed","Thu","Fri","Sat"], id: \.self) { day in
-                Text(day)
-                    .font(.caption)
-                    .frame(maxWidth: .infinity)
-            }
-
-            ForEach(daysForMonth(), id: \.self) { date in
-                if let actualDate = date {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("\(Calendar.current.component(.day, from: actualDate))")
-                            .font(.caption2)
-                            .fontWeight(.bold)
-
-                        ForEach(trainings(for: actualDate).prefix(2)) { t in
-                            Text(t.title)
-                                .font(.caption2)
-                                .lineLimit(1)
-                        }
-                        if trainings(for: actualDate).count > 2 {
-                            Text("…")
-                                .font(.caption2)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, minHeight: 40, alignment: .topLeading)
-                    .padding(4)
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(4)
-                    .onTapGesture {
-                        selectedDate = actualDate
+    VStack(alignment: .leading, spacing: 16) {
+        ForEach(upcomingDates, id: \.self) { date in
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text(dayFormatter.string(from: date))
+                        .font(.headline)
+                    Spacer()
+                    Button(action: {
+                        selectedDate = date
                         showingAddSheet = true
+                    }) {
+                        Image(systemName: "plus.circle")
                     }
+                }
+
+                if trainings(for: date).isEmpty {
+                    Text("No trainings")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
                 } else {
-                    Color.clear.frame(height: 40)
+                    ForEach(trainings(for: date)) { t in
+                        Text(t.title)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(4)
+                            .background(Color(.secondarySystemBackground))
+                            .cornerRadius(4)
+                    }
                 }
             }
         }
-
-        // Add Training button
-        Button(action: {
-            selectedDate = Date()
-            showingAddSheet = true
-        }) {
-            Label("Add Training", systemImage: "plus")
-        }
-        .padding(.top, 8)
     }
     .padding()
     .sheet(isPresented: $showingAddSheet) {
         AddTrainingView(date: selectedDate)
             .environmentObject(scheduleManager)
     }
+  }
 }
-
+                                                
 struct AddTrainingView: View {
     @EnvironmentObject var scheduleManager: TrainingScheduleManager
     @Environment(\.dismiss) var dismiss
