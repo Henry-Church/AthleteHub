@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftUI
 
 struct TrainingCalendarView: View {
     @EnvironmentObject var scheduleManager: TrainingScheduleManager
