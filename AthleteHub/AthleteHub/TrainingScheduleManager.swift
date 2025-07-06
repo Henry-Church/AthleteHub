@@ -19,6 +19,14 @@ class TrainingScheduleManager: ObservableObject {
         save()
     }
 
+    func updateTraining(_ training: ScheduledTraining, date: Date, title: String) {
+        if let index = trainings.firstIndex(where: { $0.id == training.id }) {
+            trainings[index].date = date
+            trainings[index].title = title
+            save()
+        }
+    }
+
     func removeTraining(at offsets: IndexSet) {
         trainings.remove(atOffsets: offsets)
         save()
