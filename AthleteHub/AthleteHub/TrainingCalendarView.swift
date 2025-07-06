@@ -3,41 +3,77 @@ import SwiftUI
 struct TrainingCalendarView: View {
     @EnvironmentObject var scheduleManager: TrainingScheduleManager
     @Environment(\.colorScheme) var colorScheme
+    @State private var displayedMonth = Calendar.current.startOfMonth(for: Date())
     @State private var selectedDate = Date()
     @State private var showingAddSheet = false
 
-    private var shortFormatter: DateFormatter {
+    private var monthFormatter: DateFormatter {
         let f = DateFormatter()
-        f.dateFormat = "E d"
+        f.dateFormat = "LLLL yyyy"
         return f
     }
 
-    private var startOfWeek: Date {
-        Calendar.current.dateInterval(of: .weekOfYear, for: Date())?.start ?? Date()
+    private var dayFormatter: DateFormatter {
+        let f = DateFormatter()
+        f.dateFormat = "d"
+        return f
     }
 
-    private var upcomingDates: [Date] {
-        (0..<14).compactMap { Calendar.current.date(byAdding: .day, value: $0, to: startOfWeek) }
+    private var weekdaySymbols: [String] {
+        var symbols = Calendar.current.shortWeekdaySymbols
+        let firstWeekday = Calendar.current.firstWeekday - 1
+        return Array(symbols[firstWeekday...] + symbols[..<firstWeekday])
+    }
+
+    private var monthDates: [Date] {
+        let calendar = Calendar.current
+        let firstOfMonth = calendar.startOfMonth(for: displayedMonth)
+        let weekday = calendar.component(.weekday, from: firstOfMonth)
+        let start = calendar.date(byAdding: .day, value: -(weekday - calendar.firstWeekday), to: firstOfMonth) ?? firstOfMonth
+        return (0..<42).compactMap { calendar.date(byAdding: .day, value: $0, to: start) }
     }
 
     private func trainings(for date: Date) -> [ScheduledTraining] {
         scheduleManager.trainings.filter { Calendar.current.isDate($0.date, inSameDayAs: date) }
     }
 
+    private func isCurrentMonth(_ date: Date) -> Bool {
+        Calendar.current.isDate(date, equalTo: displayedMonth, toGranularity: .month)
+    }
+
     var body: some View {
         let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 7)
 
         VStack(alignment: .leading, spacing: 12) {
-            Text("Upcoming Trainings")
-                .font(.headline)
-                .foregroundColor(.primary)
+            HStack {
+                Button(action: {
+                    displayedMonth = Calendar.current.date(byAdding: .month, value: -1, to: displayedMonth) ?? displayedMonth
+                }) {
+                    Image(systemName: "chevron.left")
+                }
+                Spacer()
+                Text(monthFormatter.string(from: displayedMonth))
+                    .font(.headline)
+                Spacer()
+                Button(action: {
+                    displayedMonth = Calendar.current.date(byAdding: .month, value: 1, to: displayedMonth) ?? displayedMonth
+                }) {
+                    Image(systemName: "chevron.right")
+                }
+            }
 
-            LazyVGrid(columns: columns, spacing: 12) {
-                ForEach(upcomingDates, id: \.self) { date in
+            LazyVGrid(columns: columns, spacing: 8) {
+                ForEach(weekdaySymbols, id: \.self) { symbol in
+                    Text(symbol)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+
+                ForEach(monthDates, id: \.self) { date in
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(shortFormatter.string(from: date))
+                        Text(dayFormatter.string(from: date))
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(isCurrentMonth(date) ? .primary : .secondary)
                         ForEach(trainings(for: date)) { t in
                             Text(t.title)
                                 .font(.caption2)
@@ -47,7 +83,7 @@ struct TrainingCalendarView: View {
                         Spacer(minLength: 0)
                     }
                     .padding(6)
-                    .frame(minHeight: 100, alignment: .topLeading)
+                    .frame(minHeight: 80, alignment: .topLeading)
                     .background(Color(.secondarySystemBackground))
                     .cornerRadius(8)
                     .onTapGesture {
@@ -68,33 +104,13 @@ struct TrainingCalendarView: View {
         }
     }
 }
-        LazyVGrid(columns: columns, spacing: 12) {
-            ForEach(upcomingDates, id: \.self) { date in
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(shortFormatter.string(from: date))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    ForEach(trainings(for: date)) { t in
-                        Text(t.title)
-                            .font(.caption2)
-                            .lineLimit(2)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    Spacer(minLength: 0)
-                }
-                .padding(6)
-                .frame(minHeight: 80, alignment: .topLeading)
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(8)
-                .onTapGesture {
-                    selectedDate = date
-                    showingAddSheet = true
-                }
-                                         
-                                               }
-        }
+
+extension Calendar {
+    func startOfMonth(for date: Date) -> Date {
+        self.date(from: dateComponents([.year, .month], from: date)) ?? date
+    }
 }
-                                               
+
 struct AddTrainingView: View {
     @EnvironmentObject var scheduleManager: TrainingScheduleManager
     @Environment(\.dismiss) var dismiss
