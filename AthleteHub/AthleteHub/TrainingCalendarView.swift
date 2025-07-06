@@ -1,10 +1,10 @@
 import SwiftUI
-
 struct TrainingCalendarView: View {
     @EnvironmentObject var scheduleManager: TrainingScheduleManager
     @State private var selectedDate = Date()
     @State private var showingAddSheet = false
-
+  
+  
     private var shortFormatter: DateFormatter {
         let f = DateFormatter()
         f.dateFormat = "E d"
@@ -46,17 +46,66 @@ struct TrainingCalendarView: View {
                 .onTapGesture {
                     selectedDate = date
                     showingAddSheet = true
+                  
+                  
+    private var dayFormatter: DateFormatter {
+        let f = DateFormatter()
+        f.dateFormat = "E, MMM d"
+        return f
+    }
+
+    private var upcomingDates: [Date] {
+        (0..<14).compactMap {
+            Calendar.current.date(byAdding: .day, value: $0, to: Date())
+        }
+    }
+
+    private func trainings(for date: Date) -> [ScheduledTraining] {
+        scheduleManager.trainings.filter {
+            Calendar.current.isDate($0.date, inSameDayAs: date)
+        }
+    }
+
+var body: some View {
+    VStack(alignment: .leading, spacing: 16) {
+        ForEach(upcomingDates, id: \.self) { date in
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text(dayFormatter.string(from: date))
+                        .font(.headline)
+                    Spacer()
+                    Button(action: {
+                        selectedDate = date
+                        showingAddSheet = true
+                    }) {
+                        Image(systemName: "plus.circle")
+                    }
+                }
+
+                if trainings(for: date).isEmpty {
+                    Text("No trainings")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                } else {
+                    ForEach(trainings(for: date)) { t in
+                        Text(t.title)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(4)
+                            .background(Color(.secondarySystemBackground))
+                            .cornerRadius(4)
+                    }
                 }
             }
         }
-        .padding()
-        .sheet(isPresented: $showingAddSheet) {
-            AddTrainingView(date: selectedDate)
-                .environmentObject(scheduleManager)
-        }
     }
+    .padding()
+    .sheet(isPresented: $showingAddSheet) {
+        AddTrainingView(date: selectedDate)
+            .environmentObject(scheduleManager)
+    }
+  }
 }
-
+                                                
 struct AddTrainingView: View {
     @EnvironmentObject var scheduleManager: TrainingScheduleManager
     @Environment(\.dismiss) var dismiss
