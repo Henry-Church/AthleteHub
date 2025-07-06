@@ -68,7 +68,33 @@ struct TrainingCalendarView: View {
         }
     }
 }
-
+        LazyVGrid(columns: columns, spacing: 12) {
+            ForEach(upcomingDates, id: \.self) { date in
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(shortFormatter.string(from: date))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    ForEach(trainings(for: date)) { t in
+                        Text(t.title)
+                            .font(.caption2)
+                            .lineLimit(2)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    Spacer(minLength: 0)
+                }
+                .padding(6)
+                .frame(minHeight: 80, alignment: .topLeading)
+                .background(Color(.secondarySystemBackground))
+                .cornerRadius(8)
+                .onTapGesture {
+                    selectedDate = date
+                    showingAddSheet = true
+                }
+                                         
+                                               }
+        }
+}
+                                               
 struct AddTrainingView: View {
     @EnvironmentObject var scheduleManager: TrainingScheduleManager
     @Environment(\.dismiss) var dismiss
