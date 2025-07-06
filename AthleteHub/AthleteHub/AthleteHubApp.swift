@@ -14,6 +14,7 @@ struct AthleteHubApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @StateObject private var authViewModel = AuthViewModel()
     @StateObject private var healthManager = HealthManager()
+    @StateObject private var scheduleManager = TrainingScheduleManager()
     @State private var isLoading = true
 
     var body: some Scene {
@@ -32,6 +33,7 @@ struct AthleteHubApp: App {
                     .environmentObject(authViewModel)
                     .environmentObject(authViewModel.userProfile)
                     .environmentObject(healthManager)
+                    .environmentObject(scheduleManager)
             }
         }
     }
