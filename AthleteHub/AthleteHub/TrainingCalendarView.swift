@@ -9,10 +9,21 @@ struct TrainingCalendarView: View {
         scheduleManager.trainings.filter { Calendar.current.isDate($0.date, inSameDayAs: selectedDate) }
     }
 
+    private var weekTrainings: [Date: [ScheduledTraining]] {
+        let calendar = Calendar.current
+        let startOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: selectedDate)) ?? selectedDate
+        let endOfWeek = calendar.date(byAdding: .day, value: 7, to: startOfWeek) ?? startOfWeek
+        let trainings = scheduleManager.trainings.filter { $0.date >= startOfWeek && $0.date < endOfWeek }
+        return Dictionary(grouping: trainings) { calendar.startOfDay(for: $0.date) }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             DatePicker("", selection: $selectedDate, displayedComponents: .date)
                 .datePickerStyle(.graphical)
+                .padding(8)
+                .background(Color.yellow.opacity(0.3))
+                .cornerRadius(12)
 
             if dayTrainings.isEmpty {
                 Text("No trainings scheduled")
@@ -38,6 +49,34 @@ struct TrainingCalendarView: View {
             .sheet(isPresented: $showingAddSheet) {
                 AddTrainingView(date: selectedDate)
                     .environmentObject(scheduleManager)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Week Overview")
+                    .font(.headline)
+
+                if weekTrainings.isEmpty {
+                    Text("No trainings this week")
+                        .foregroundColor(.secondary)
+                } else {
+                    ForEach(weekTrainings.keys.sorted(), id: \.self) { day in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(day, style: .date)
+                                .fontWeight(.semibold)
+                            ForEach(weekTrainings[day] ?? []) { training in
+                                HStack {
+                                    Text(training.title)
+                                    Spacer()
+                                    Text(training.date, style: .time)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                        .padding(8)
+                        .background(Color(.secondarySystemBackground))
+                        .cornerRadius(8)
+                    }
+                }
             }
         }
         .padding()
