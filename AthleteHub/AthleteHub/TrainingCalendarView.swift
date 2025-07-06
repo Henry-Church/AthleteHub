@@ -1,6 +1,69 @@
 import SwiftUI
 struct TrainingCalendarView: View {
     @EnvironmentObject var scheduleManager: TrainingScheduleManager
+    @State private var selectedDate = Date()
+    @State private var showingAddSheet = false
+
+    private var dayFormatter: DateFormatter {
+        let f = DateFormatter()
+        f.dateFormat = "E, MMM d"
+        return f
+    }
+
+    private var upcomingDates: [Date] {
+        (0..<14).compactMap {
+            Calendar.current.date(byAdding: .day, value: $0, to: Date())
+        }
+    }
+
+    private func trainings(for date: Date) -> [ScheduledTraining] {
+        scheduleManager.trainings.filter {
+            Calendar.current.isDate($0.date, inSameDayAs: date)
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            ForEach(upcomingDates, id: \.self) { date in
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text(dayFormatter.string(from: date))
+                            .font(.headline)
+                        Spacer()
+                        Button(action: {
+                            selectedDate = date
+                            showingAddSheet = true
+                        }) {
+                            Image(systemName: "plus.circle")
+                        }
+                    }
+
+                    if trainings(for: date).isEmpty {
+                        Text("No trainings")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                    } else {
+                        ForEach(trainings(for: date)) { t in
+                            Text(t.title)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(4)
+                                .background(Color(.secondarySystemBackground))
+                                .cornerRadius(4)
+                        }
+                    }
+                }
+            }
+        }
+        .padding()
+        .sheet(isPresented: $showingAddSheet) {
+            AddTrainingView(date: selectedDate)
+                .environmentObject(scheduleManager)
+        }
+    }
+}
+
+struct TrainingCalendarView: View {
+    @EnvironmentObject var scheduleManager: TrainingScheduleManager
     @State private var displayedMonth = Date()
     @State private var selectedDate = Date()
     @State private var showingAddSheet = false
@@ -45,7 +108,7 @@ struct TrainingCalendarView: View {
         return days
     }
 
-    var body: some View {
+var body: some View {
     VStack(alignment: .leading, spacing: 12) {
         // Month navigation
         HStack {
@@ -77,14 +140,12 @@ struct TrainingCalendarView: View {
         // Weekday headers + day grid
         let columns = Array(repeating: GridItem(.flexible()), count: 7)
         LazyVGrid(columns: columns, spacing: 8) {
-            // Sun–Sat labels
             ForEach(["Sun","Mon","Tue","Wed","Thu","Fri","Sat"], id: \.self) { day in
                 Text(day)
                     .font(.caption)
                     .frame(maxWidth: .infinity)
             }
 
-            // Days of the month (with up to two training titles)
             ForEach(daysForMonth(), id: \.self) { date in
                 if let actualDate = date {
                     VStack(alignment: .leading, spacing: 2) {
@@ -92,16 +153,13 @@ struct TrainingCalendarView: View {
                             .font(.caption2)
                             .fontWeight(.bold)
 
-                        // Show up to two trainings
                         ForEach(trainings(for: actualDate).prefix(2)) { t in
                             Text(t.title)
                                 .font(.caption2)
                                 .lineLimit(1)
                         }
-
-                        // “…” if there are more
                         if trainings(for: actualDate).count > 2 {
-                            Text("...")
+                            Text("…")
                                 .font(.caption2)
                         }
                     }
@@ -127,12 +185,12 @@ struct TrainingCalendarView: View {
             Label("Add Training", systemImage: "plus")
         }
         .padding(.top, 8)
-        .sheet(isPresented: $showingAddSheet) {
-            AddTrainingView(date: selectedDate)
-                .environmentObject(scheduleManager)
-        }
     }
     .padding()
+    .sheet(isPresented: $showingAddSheet) {
+        AddTrainingView(date: selectedDate)
+            .environmentObject(scheduleManager)
+    }
 }
 
 struct AddTrainingView: View {
