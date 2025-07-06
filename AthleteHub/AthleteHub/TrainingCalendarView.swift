@@ -1,10 +1,11 @@
 import SwiftUI
-
 struct TrainingCalendarView: View {
     @EnvironmentObject var scheduleManager: TrainingScheduleManager
     @State private var displayedMonth = Date()
     @State private var selectedDate = Date()
     @State private var showingAddSheet = false
+
+    // MARK: – Computed Properties
 
     private var monthTitle: String {
         let formatter = DateFormatter()
@@ -13,94 +14,125 @@ struct TrainingCalendarView: View {
     }
 
     private func trainings(for date: Date) -> [ScheduledTraining] {
-        scheduleManager.trainings.filter { Calendar.current.isDate($0.date, inSameDayAs: date) }
+        scheduleManager.trainings.filter {
+            Calendar.current.isDate($0.date, inSameDayAs: date)
+        }
     }
 
     private func daysForMonth() -> [Date?] {
         guard
-            let monthFirstDay = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: displayedMonth))
+            let monthFirstDay = Calendar.current.date(
+                from: Calendar.current.dateComponents([.year, .month], from: displayedMonth)
+            )
         else { return [] }
 
-        let daysRange = Calendar.current.range(of: .day, in: .month, for: displayedMonth) ?? 1...30
+        let daysRange = Calendar.current.range(
+            of: .day,
+            in: .month,
+            for: displayedMonth
+        ) ?? 1...30
+
         let firstWeekday = Calendar.current.component(.weekday, from: monthFirstDay)
-        var days: [Date?] = Array(repeating: nil, count: (firstWeekday - Calendar.current.firstWeekday + 7) % 7)
-        days += daysRange.compactMap { day -> Date? in
-            Calendar.current.date(byAdding: .day, value: day - 1, to: monthFirstDay)
+        let leadingEmpty = (firstWeekday - Calendar.current.firstWeekday + 7) % 7
+
+        var days: [Date?] = Array(repeating: nil, count: leadingEmpty)
+        days += daysRange.compactMap {
+            Calendar.current.date(byAdding: .day, value: $0 - 1, to: monthFirstDay)
         }
+
         let rows = Int(ceil(Double(days.count) / 7.0))
         days += Array(repeating: nil, count: rows * 7 - days.count)
         return days
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Button(action: { displayedMonth = Calendar.current.date(byAdding: .month, value: -1, to: displayedMonth) ?? displayedMonth }) {
-                    Image(systemName: "chevron.left")
-                }
-                Spacer()
-                Text(monthTitle)
-                    .font(.headline)
-                Spacer()
-                Button(action: { displayedMonth = Calendar.current.date(byAdding: .month, value: 1, to: displayedMonth) ?? displayedMonth }) {
-                    Image(systemName: "chevron.right")
-                }
-            }
-            .padding(.horizontal)
-
-            let columns = Array(repeating: GridItem(.flexible()), count: 7)
-            LazyVGrid(columns: columns, spacing: 8) {
-                ForEach(["Sun","Mon","Tue","Wed","Thu","Fri","Sat"], id: \.
-self) { day in
-                    Text(day)
-                        .font(.caption)
-                        .frame(maxWidth: .infinity)
-                }
-                ForEach(daysForMonth(), id: \.
-self) { date in
-                    if let actualDate = date {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("\(Calendar.current.component(.day, from: actualDate))")
-                                .font(.caption2)
-                                .fontWeight(.bold)
-                            ForEach(trainings(for: actualDate).prefix(2)) { t in
-                                Text(t.title)
-                                    .font(.caption2)
-                                    .lineLimit(1)
-                            }
-                            if trainings(for: actualDate).count > 2 {
-                                Text("...")
-                                    .font(.caption2)
-                            }
-                        }
-                        .frame(maxWidth: .infinity, minHeight: 40, alignment: .topLeading)
-                        .padding(4)
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(4)
-                        .onTapGesture {
-                            selectedDate = actualDate
-                            showingAddSheet = true
-                        }
-                    } else {
-                        Color.clear.frame(height: 40)
-                    }
-                }
-            }
-
+    VStack(alignment: .leading, spacing: 12) {
+        // Month navigation
+        HStack {
             Button(action: {
-                selectedDate = Date()
-                showingAddSheet = true
+                displayedMonth = Calendar.current.date(
+                    byAdding: .month,
+                    value: -1,
+                    to: displayedMonth
+                ) ?? displayedMonth
             }) {
-                Label("Add Training", systemImage: "plus")
+                Image(systemName: "chevron.left")
             }
-            .padding(.top, 8)
-            .sheet(isPresented: $showingAddSheet) {
-                AddTrainingView(date: selectedDate)
-                    .environmentObject(scheduleManager)
+            Spacer()
+            Text(monthTitle)
+                .font(.headline)
+            Spacer()
+            Button(action: {
+                displayedMonth = Calendar.current.date(
+                    byAdding: .month,
+                    value: 1,
+                    to: displayedMonth
+                ) ?? displayedMonth
+            }) {
+                Image(systemName: "chevron.right")
             }
         }
-        .padding()
+        .padding(.horizontal)
+
+        // Weekday headers + day grid
+        let columns = Array(repeating: GridItem(.flexible()), count: 7)
+        LazyVGrid(columns: columns, spacing: 8) {
+            // Sun–Sat labels
+            ForEach(["Sun","Mon","Tue","Wed","Thu","Fri","Sat"], id: \.self) { day in
+                Text(day)
+                    .font(.caption)
+                    .frame(maxWidth: .infinity)
+            }
+
+            // Days of the month (with up to two training titles)
+            ForEach(daysForMonth(), id: \.self) { date in
+                if let actualDate = date {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("\(Calendar.current.component(.day, from: actualDate))")
+                            .font(.caption2)
+                            .fontWeight(.bold)
+
+                        // Show up to two trainings
+                        ForEach(trainings(for: actualDate).prefix(2)) { t in
+                            Text(t.title)
+                                .font(.caption2)
+                                .lineLimit(1)
+                        }
+
+                        // “…” if there are more
+                        if trainings(for: actualDate).count > 2 {
+                            Text("...")
+                                .font(.caption2)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 40, alignment: .topLeading)
+                    .padding(4)
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(4)
+                    .onTapGesture {
+                        selectedDate = actualDate
+                        showingAddSheet = true
+                    }
+                } else {
+                    Color.clear.frame(height: 40)
+                }
+            }
+        }
+
+        // Add Training button
+        Button(action: {
+            selectedDate = Date()
+            showingAddSheet = true
+        }) {
+            Label("Add Training", systemImage: "plus")
+        }
+        .padding(.top, 8)
+        .sheet(isPresented: $showingAddSheet) {
+            AddTrainingView(date: selectedDate)
+                .environmentObject(scheduleManager)
+        }
     }
+    .padding()
 }
 
 struct AddTrainingView: View {
