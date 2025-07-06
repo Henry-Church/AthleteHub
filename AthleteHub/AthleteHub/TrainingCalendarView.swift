@@ -1,9 +1,12 @@
 import SwiftUI
+import SwiftUI
 
 struct TrainingCalendarView: View {
     @EnvironmentObject var scheduleManager: TrainingScheduleManager
+    @Environment(\.colorScheme) var colorScheme
     @State private var selectedDate = Date()
     @State private var showingAddSheet = false
+    @State private var trainingToEdit: ScheduledTraining?
 
     private var dayTrainings: [ScheduledTraining] {
         scheduleManager.trainings.filter { Calendar.current.isDate($0.date, inSameDayAs: selectedDate) }
@@ -39,6 +42,9 @@ struct TrainingCalendarView: View {
                     .padding(8)
                     .background(Color(.secondarySystemBackground))
                     .cornerRadius(8)
+                    .onTapGesture {
+                        trainingToEdit = training
+                    }
                 }
                 .onDelete(perform: delete)
             }
@@ -48,6 +54,10 @@ struct TrainingCalendarView: View {
             }
             .sheet(isPresented: $showingAddSheet) {
                 AddTrainingView(date: selectedDate)
+                    .environmentObject(scheduleManager)
+            }
+            .sheet(item: $trainingToEdit) { training in
+                AddTrainingView(training: training)
                     .environmentObject(scheduleManager)
             }
 
@@ -70,6 +80,9 @@ struct TrainingCalendarView: View {
                                     Text(training.date, style: .time)
                                         .foregroundColor(.secondary)
                                 }
+                                .onTapGesture {
+                                    trainingToEdit = training
+                                }
                             }
                         }
                         .padding(8)
@@ -79,6 +92,10 @@ struct TrainingCalendarView: View {
                 }
             }
         }
+        .padding()
+        .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color.white)
+        .cornerRadius(20)
+        .shadow(color: Color.yellow.opacity(0.3), radius: 8, x: 0, y: 4)
         .padding()
     }
 
@@ -91,9 +108,17 @@ struct TrainingCalendarView: View {
 struct AddTrainingView: View {
     @EnvironmentObject var scheduleManager: TrainingScheduleManager
     @Environment(\.dismiss) var dismiss
-    @State var date: Date
-    @State private var time = Date()
-    @State private var title = ""
+    var training: ScheduledTraining?
+    @State private var date: Date
+    @State private var time: Date
+    @State private var title: String
+
+    init(training: ScheduledTraining? = nil, date: Date = Date()) {
+        self.training = training
+        _date = State(initialValue: training?.date ?? date)
+        _time = State(initialValue: training?.date ?? Date())
+        _title = State(initialValue: training?.title ?? "")
+    }
 
     var body: some View {
         NavigationView {
@@ -102,7 +127,7 @@ struct AddTrainingView: View {
                 DatePicker("Date", selection: $date, displayedComponents: .date)
                 DatePicker("Time", selection: $time, displayedComponents: .hourAndMinute)
             }
-            .navigationTitle("New Training")
+            .navigationTitle(training == nil ? "New Training" : "Edit Training")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") { dismiss() }
@@ -114,7 +139,11 @@ struct AddTrainingView: View {
                         comps.hour = t.hour
                         comps.minute = t.minute
                         let combined = Calendar.current.date(from: comps) ?? date
-                        scheduleManager.addTraining(date: combined, title: title)
+                        if let training = training {
+                            scheduleManager.updateTraining(training, date: combined, title: title)
+                        } else {
+                            scheduleManager.addTraining(date: combined, title: title)
+                        }
                         dismiss()
                     }
                 }
