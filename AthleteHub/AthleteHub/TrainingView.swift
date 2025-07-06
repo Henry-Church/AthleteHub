@@ -9,6 +9,7 @@ import HealthKit
 struct TrainingView: View {
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var healthManager: HealthManager
+    @EnvironmentObject var scheduleManager: TrainingScheduleManager
     @State private var showingSetGoals = false
     @State private var showingManualEntry = false
     
@@ -93,8 +94,10 @@ struct TrainingView: View {
                 .padding(.horizontal)
 
                 RecentWorkoutsCard(healthManager: healthManager, colorScheme: colorScheme)
-                
+
                 TrainingScoreTrendCard(healthManager: healthManager)
+
+                TrainingCalendarView()
             }
             .padding(.vertical)
         }
