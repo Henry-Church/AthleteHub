@@ -32,37 +32,65 @@ class TrainingScheduleManager: ObservableObject {
         save()
     }
 
-    /// Import trainings from an iCalendar (.ics) file.
-    /// Only `DTSTART` and `SUMMARY` fields are parsed.
-    func importTrainings(from url: URL) {
-        guard let text = try? String(contentsOf: url) else { return }
+/// Import trainings from an iCalendar (.ics) file.
+/// Attempts to parse a variety of `DTSTART` formats so that events
+/// from most calendar apps are recognised. Only `SUMMARY` and `DTSTART` fields are used.
+func importTrainings(from url: URL) {
+    guard let text = try? String(contentsOf: url) else { return }
 
-        var currentTitle: String?
-        var currentDate: Date?
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyyMMdd'T'HHmmss'Z'"
-        dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
+    var imported: [ScheduledTraining] = []
+    var currentTitle: String?
+    var currentDate: Date?
 
-        for line in text.components(separatedBy: .newlines) {
-            if line.hasPrefix("BEGIN:VEVENT") {
-                currentTitle = nil
-                currentDate = nil
-            } else if line.hasPrefix("SUMMARY:") {
-                currentTitle = String(line.dropFirst(8))
-            } else if line.hasPrefix("DTSTART") {
-                if let range = line.range(of: ":") {
-                    let value = String(line[range.upperBound...])
-                    currentDate = dateFormatter.date(from: value)
-                }
-            } else if line.hasPrefix("END:VEVENT") {
-                if let date = currentDate, let title = currentTitle {
-                    trainings.append(ScheduledTraining(date: date, title: title))
-                }
+    // UTC timestamp, e.g. 20250707T183200Z
+    let utcFormatter = DateFormatter()
+    utcFormatter.dateFormat = "yyyyMMdd'T'HHmmss'Z'"
+    utcFormatter.timeZone = TimeZone(secondsFromGMT: 0)
+
+    // Local timestamp, e.g. 20250707T183200
+    let localFormatter = DateFormatter()
+    localFormatter.dateFormat = "yyyyMMdd'T'HHmmss"
+
+    // Date-only, e.g. 20250707
+    let dateOnlyFormatter = DateFormatter()
+    dateOnlyFormatter.dateFormat = "yyyyMMdd"
+
+    for line in text.components(separatedBy: .newlines) {
+        switch true {
+        case line.hasPrefix("BEGIN:VEVENT"):
+            currentTitle = nil
+            currentDate = nil
+
+        case line.hasPrefix("SUMMARY:"):
+            // drop "SUMMARY:" prefix
+            currentTitle = String(line.dropFirst("SUMMARY:".count))
+
+        case line.hasPrefix("DTSTART"):
+            if let colon = line.firstIndex(of: ":") {
+                let value = String(line[line.index(after: colon)...])
+                currentDate =
+                    utcFormatter.date(from: value) ?:
+                    localFormatter.date(from: value) ?:
+                    dateOnlyFormatter.date(from: value)
             }
-        }
 
-        save()
+        case line.hasPrefix("END:VEVENT"):
+            if let date = currentDate, let title = currentTitle {
+                imported.append(ScheduledTraining(date: date, title: title))
+            }
+
+        default:
+            continue
+        }
     }
+
+    guard !imported.isEmpty else { return }
+    // Merge and sort
+    trainings.append(contentsOf: imported)
+    trainings.sort { $0.date < $1.date }
+
+    save()
+}
 
     private func load() {
         if let data = UserDefaults.standard.data(forKey: "scheduledTrainings"),

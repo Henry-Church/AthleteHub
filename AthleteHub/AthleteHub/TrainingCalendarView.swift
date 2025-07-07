@@ -26,7 +26,6 @@ struct TrainingCalendarView: View {
             DatePicker("", selection: $selectedDate, displayedComponents: .date)
                 .datePickerStyle(.graphical)
                 .padding(8)
-                .background(Color.yellow.opacity(0.3))
                 .cornerRadius(12)
 
             if dayTrainings.isEmpty {
@@ -67,6 +66,7 @@ struct TrainingCalendarView: View {
             }
             .fileImporter(
                 isPresented: $showingImporter,
+                allowedContentTypes: [UTType(filenameExtension: "ics") ?? .data]
                 allowedContentTypes: [.data]
             ) { result in
                 switch result {
