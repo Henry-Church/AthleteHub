@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct TrainingCalendarView: View {
     @EnvironmentObject var scheduleManager: TrainingScheduleManager
@@ -6,6 +7,7 @@ struct TrainingCalendarView: View {
     @State private var selectedDate = Date()
     @State private var showingAddSheet = false
     @State private var trainingToEdit: ScheduledTraining?
+    @State private var showingImporter = false
 
     private var dayTrainings: [ScheduledTraining] {
         scheduleManager.trainings.filter { Calendar.current.isDate($0.date, inSameDayAs: selectedDate) }
@@ -58,6 +60,21 @@ struct TrainingCalendarView: View {
             .sheet(item: $trainingToEdit) { training in
                 AddTrainingView(training: training)
                     .environmentObject(scheduleManager)
+            }
+
+            Button(action: { showingImporter = true }) {
+                Label("Import Trainings", systemImage: "tray.and.arrow.down")
+            }
+            .fileImporter(
+                isPresented: $showingImporter,
+                allowedContentTypes: [.data]
+            ) { result in
+                switch result {
+                case .success(let url):
+                    scheduleManager.importTrainings(from: url)
+                case .failure:
+                    break
+                }
             }
 
             VStack(alignment: .leading, spacing: 8) {

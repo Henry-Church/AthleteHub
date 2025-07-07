@@ -32,6 +32,38 @@ class TrainingScheduleManager: ObservableObject {
         save()
     }
 
+    /// Import trainings from an iCalendar (.ics) file.
+    /// Only `DTSTART` and `SUMMARY` fields are parsed.
+    func importTrainings(from url: URL) {
+        guard let text = try? String(contentsOf: url) else { return }
+
+        var currentTitle: String?
+        var currentDate: Date?
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyyMMdd'T'HHmmss'Z'"
+        dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
+
+        for line in text.components(separatedBy: .newlines) {
+            if line.hasPrefix("BEGIN:VEVENT") {
+                currentTitle = nil
+                currentDate = nil
+            } else if line.hasPrefix("SUMMARY:") {
+                currentTitle = String(line.dropFirst(8))
+            } else if line.hasPrefix("DTSTART") {
+                if let range = line.range(of: ":") {
+                    let value = String(line[range.upperBound...])
+                    currentDate = dateFormatter.date(from: value)
+                }
+            } else if line.hasPrefix("END:VEVENT") {
+                if let date = currentDate, let title = currentTitle {
+                    trainings.append(ScheduledTraining(date: date, title: title))
+                }
+            }
+        }
+
+        save()
+    }
+
     private func load() {
         if let data = UserDefaults.standard.data(forKey: "scheduledTrainings"),
            let decoded = try? JSONDecoder().decode([ScheduledTraining].self, from: data) {
