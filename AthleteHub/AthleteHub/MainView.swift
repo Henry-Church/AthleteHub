@@ -8,12 +8,15 @@ struct MainView: View {
     var body: some View {
         Group {
             if authViewModel.user != nil {
-                TabView {
-                    DashboardView()
-                        .tabItem {
-                            Image(systemName: "house.fill")
-                            Text("Dashboard")
-                        }
+                if authViewModel.userProfile.role == "Coach" {
+                    CoachDashboardView()
+                } else {
+                    TabView {
+                        DashboardView()
+                            .tabItem {
+                                Image(systemName: "house.fill")
+                                Text("Dashboard")
+                            }
 
                     TrainingView()
                         .tabItem {
@@ -33,13 +36,14 @@ struct MainView: View {
                             Text("Recovery")
                         }
 
-                    ProfileView()
-                        .tabItem {
-                            Image(systemName: "person.crop.circle")
-                            Text("Profile")
-                        }
+                        ProfileView()
+                            .tabItem {
+                                Image(systemName: "person.crop.circle")
+                                Text("Profile")
+                            }
+                    }
+                    .edgesIgnoringSafeArea(.all)
                 }
-                .edgesIgnoringSafeArea(.all)
             } else {
                 LoginView()
             }
