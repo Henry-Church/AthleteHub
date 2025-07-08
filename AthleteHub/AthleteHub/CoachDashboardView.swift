@@ -38,7 +38,8 @@ struct CoachDashboardView: View {
                     }
                     .padding(.horizontal)
                 } else if !searchName.isEmpty {
-                    Text(errorMessage ?? "No athletes found").foregroundColor(.red)
+                    Text(errorMessage ?? "No athletes found")
+                        .foregroundColor(.red)
                         .padding(.horizontal)
                 } else if !suggestedAthletes.isEmpty {
                     VStack(alignment: .leading) {
@@ -122,12 +123,29 @@ struct CoachDashboardView: View {
 
     private func loadAthletes() {
         let db = Firestore.firestore()
-        guard !authViewModel.userProfile.uid.isEmpty else { return }
-        db.collection("coaches").document(authViewModel.userProfile.uid)
-            .collection("athletes").getDocuments { snapshot, _ in
+        let coachId = authViewModel.userProfile.uid
+        guard !coachId.isEmpty else { return }
+        db.collection("coaches").document(coachId)
+            .collection("athletes")
+            .getDocuments { snapshot, _ in
                 if let docs = snapshot?.documents {
                     athletes = docs.map { AthleteRef(id: $0.documentID, name: $0.data()["name"] as? String ?? "Athlete") }
                 }
+            }
+    }
+}
+
+
+struct AthleteDetailView: View {
+    let athleteId: String
+    @StateObject private var profile = UserProfile()
+
+    var body: some View {
+        DashboardView()
+            .environmentObject(profile)
+            .onAppear {
+                profile.uid = athleteId
+                profile.loadFromFirestore()
             }
     }
 }
