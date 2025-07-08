@@ -2,7 +2,10 @@ import SwiftUI
 import FirebaseFirestore
 
 struct AthleteRef: Identifiable {
+    /// Readable identifier for the athlete, typically their profile name.
     var id: String
+    /// Firebase UID for loading the full profile.
+    var uid: String
     var name: String
 }
 
@@ -57,7 +60,7 @@ struct CoachDashboardView: View {
                 }
 
                 List(athletes) { athlete in
-                    NavigationLink(destination: AthleteDetailView(athleteId: athlete.id)) {
+                    NavigationLink(destination: AthleteDetailView(athleteId: athlete.uid)) {
                         Text(athlete.name)
                     }
                 }
@@ -80,13 +83,19 @@ struct CoachDashboardView: View {
         }
         db.collection("users")
             .whereField("role", isEqualTo: "Athlete")
-            .order(by: "name")
+            .order(by: "profileId")
             .start(at: [trimmed])
             .end(at: [trimmed + "\u{f8ff}"])
             .limit(to: 10)
             .getDocuments { snapshot, _ in
                 if let docs = snapshot?.documents, !docs.isEmpty {
-                    searchResults = docs.map { AthleteRef(id: $0.documentID, name: $0.data()["name"] as? String ?? "Athlete") }
+                    searchResults = docs.map {
+                        AthleteRef(
+                            id: $0.data()["profileId"] as? String ?? "",
+                            uid: $0.documentID,
+                            name: $0.data()["name"] as? String ?? "Athlete"
+                        )
+                    }
                     errorMessage = nil
                 } else {
                     searchResults = []
@@ -99,11 +108,17 @@ struct CoachDashboardView: View {
         let db = Firestore.firestore()
         db.collection("users")
             .whereField("role", isEqualTo: "Athlete")
-            .order(by: "name")
+            .order(by: "profileId")
             .limit(to: 5)
             .getDocuments { snapshot, _ in
                 if let docs = snapshot?.documents {
-                    suggestedAthletes = docs.map { AthleteRef(id: $0.documentID, name: $0.data()["name"] as? String ?? "Athlete") }
+                    suggestedAthletes = docs.map {
+                        AthleteRef(
+                            id: $0.data()["profileId"] as? String ?? "",
+                            uid: $0.documentID,
+                            name: $0.data()["name"] as? String ?? "Athlete"
+                        )
+                    }
                 }
             }
     }
@@ -114,7 +129,10 @@ struct CoachDashboardView: View {
         guard !coachId.isEmpty else { return }
         db.collection("coaches").document(coachId)
             .collection("athletes").document(athlete.id)
-            .setData(["name": athlete.name]) { _ in
+            .setData([
+                "name": athlete.name,
+                "uid": athlete.uid
+            ]) { _ in
                 loadAthletes()
                 searchResults.removeAll { $0.id == athlete.id }
                 searchName = ""
@@ -129,7 +147,13 @@ struct CoachDashboardView: View {
             .collection("athletes")
             .getDocuments { snapshot, _ in
                 if let docs = snapshot?.documents {
-                    athletes = docs.map { AthleteRef(id: $0.documentID, name: $0.data()["name"] as? String ?? "Athlete") }
+                    athletes = docs.map {
+                        AthleteRef(
+                            id: $0.documentID,
+                            uid: $0.data()["uid"] as? String ?? "",
+                            name: $0.data()["name"] as? String ?? "Athlete"
+                        )
+                    }
                 }
             }
     }
