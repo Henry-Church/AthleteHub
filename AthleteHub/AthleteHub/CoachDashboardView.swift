@@ -80,41 +80,48 @@ private func searchForName() {
         searchResults = []
         return
     }
-    db.collection("users")
+    db.collectionGroup("profile")
         .whereField("role", isEqualTo: "Athlete")
-        .order(by: "profileId")
-        .start(at: [trimmed])
-        .end(at: [trimmed + "\u{f8ff}"])
-        .limit(to: 10)
-        .getDocuments { snapshot, error in
-            if let docs = snapshot?.documents, !docs.isEmpty {
-                searchResults = docs.map {
-                    AthleteRef(
-                        id:   $0.data()["profileId"] as? String ?? "",
-                        uid:  $0.documentID,
-                        name: $0.data()["name"]      as? String ?? "Athlete"
-                    )
+        .limit(to: 50)
+        .getDocuments { snapshot, _ in
+            if let docs = snapshot?.documents {
+                let filtered = docs.filter {
+                    let name = ($0.data()["name"] as? String ?? "").lowercased()
+                    return name.hasPrefix(trimmed.lowercased())
                 }
-                errorMessage = nil
-            } else {
-                searchResults = []
-                errorMessage = "No athletes found"
+                if !filtered.isEmpty {
+                    searchResults = filtered.map {
+                        AthleteRef(
+                            id:   $0.data()["profileId"] as? String ?? "",
+                            uid:  $0.reference.parent.parent?.documentID ?? "",
+                            name: $0.data()["name"]      as? String ?? "Athlete"
+                        )
+                    }
+                    errorMessage = nil
+                } else {
+                    searchResults = []
+                    errorMessage = "No athletes found"
+                }
             }
         }
 }
 
 private func fetchSuggestedAthletes() {
     let db = Firestore.firestore()
-    db.collection("users")
+    db.collectionGroup("profile")
         .whereField("role", isEqualTo: "Athlete")
-        .order(by: "profileId")
-        .limit(to: 5)
-        .getDocuments { snapshot, error in
+        .limit(to: 20)
+        .getDocuments { snapshot, _ in
             if let docs = snapshot?.documents {
-                suggestedAthletes = docs.map {
+                let sorted = docs.sorted { lhs, rhs in
+                    let left = lhs.data()["name"] as? String ?? ""
+                    let right = rhs.data()["name"] as? String ?? ""
+                    return left < right
+                }
+                suggestedAthletes = sorted.prefix(5).map {
                     AthleteRef(
                         id:   $0.data()["profileId"] as? String ?? "",
-                        uid:  $0.documentID,
+                        uid:  $0.reference.parent.parent?.documentID ?? "",
                         name: $0.data()["name"]      as? String ?? "Athlete"
                     )
                 }
