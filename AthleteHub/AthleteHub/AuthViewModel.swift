@@ -43,7 +43,7 @@ class AuthViewModel: ObservableObject {
         }
     }
 
-    func signUp(email: String, password: String, name: String, birthDate: String, sex: String, height: Double, weight: Double) {
+    func signUp(email: String, password: String, name: String, birthDate: String, sex: String, height: Double, weight: Double, role: String) {
         Auth.auth().createUser(withEmail: email, password: password) { result, error in
             if let error = error {
                 print("Error signing up: \(error.localizedDescription)")
@@ -56,6 +56,15 @@ class AuthViewModel: ObservableObject {
                 self.userProfile.sex = sex
                 self.userProfile.height = height
                 self.userProfile.weight = weight
+                self.userProfile.role = role
+
+                let db = Firestore.firestore()
+                db.collection("users").document(user.uid).setData([
+                    "email": email,
+                    "name": name,
+                    "role": role
+                ])
+
                 self.userProfile.saveToFirestore()
             }
         }
