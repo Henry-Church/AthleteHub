@@ -69,6 +69,22 @@ struct CoachDashboardView: View {
                     loadAthletes()
                     fetchSuggestedAthletes()
                 }
+
+                Button(action: {
+                    authViewModel.signOut()
+                }) {
+                    HStack {
+                        Image(systemName: "arrow.backward.square")
+                        Text("Sign Out")
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .foregroundColor(.white)
+                    .background(Color.red)
+                    .cornerRadius(8)
+                }
+                .padding(.horizontal)
+                .padding(.bottom)
             }
             .navigationTitle("Coach Dashboard")
         }
