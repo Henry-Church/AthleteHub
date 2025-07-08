@@ -52,6 +52,7 @@ class AuthViewModel: ObservableObject {
                 self.userProfile.uid = user.uid
                 self.userProfile.email = email
                 self.userProfile.name = name
+                self.userProfile.profileId = name
                 self.userProfile.birthDate = birthDate
                 self.userProfile.sex = sex
                 self.userProfile.height = height
@@ -62,6 +63,7 @@ class AuthViewModel: ObservableObject {
                 db.collection("users").document(user.uid).setData([
                     "email": email,
                     "name": name,
+                    "profileId": name,
                     "role": role
                 ])
 

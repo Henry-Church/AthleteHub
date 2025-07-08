@@ -75,6 +75,7 @@ struct UserSettingsFormView: View {
             .navigationTitle("User Settings")
             .navigationBarItems(trailing: Button("Done") {
                 userProfile.name = username
+                userProfile.profileId = username
                 userProfile.sex = selectedSex
                 userProfile.height = height
                 userProfile.weight = weight
@@ -83,6 +84,7 @@ struct UserSettingsFormView: View {
                 if let image = selectedImage {
                     userProfile.profileImage = image
                 }
+                userProfile.saveToFirestore()
                 presentationMode.wrappedValue.dismiss()
             })
             .onAppear {
