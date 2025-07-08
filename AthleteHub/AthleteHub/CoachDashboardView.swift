@@ -8,38 +8,45 @@ struct AthleteRef: Identifiable {
 
 struct CoachDashboardView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
-    @State private var searchName = ""
-    @State private var searchResults: [AthleteRef] = []
+    @State private var searchEmail = ""
+    @State private var foundAthlete: AthleteRef?
     @State private var errorMessage: String?
     @State private var athletes: [AthleteRef] = []
 
     var body: some View {
         NavigationView {
             VStack {
+                // Search bar
                 HStack {
-                    TextField("Athlete name", text: $searchName)
+                    TextField("Athlete email", text: $searchEmail)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
-                    Button("Find") { findAthletes() }
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                    Button("Find") {
+                        errorMessage = nil
+                        foundAthlete = nil
+                        findAthlete()
+                    }
+                    .disabled(searchEmail.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
                 .padding()
 
-                if !searchResults.isEmpty {
-                    VStack(alignment: .leading) {
-                        Text("Results")
-                            .font(.headline)
-                        ForEach(searchResults) { result in
-                            HStack {
-                                Text(result.name)
-                                Spacer()
-                                Button("Add") { addFoundAthlete(result) }
-                            }
-                        }
+                // Search result / error
+                if let athlete = foundAthlete {
+                    Button("Add \(athlete.name)") {
+                        addFoundAthlete(athlete)
+                        // clear the search
+                        searchEmail = ""
+                        foundAthlete = nil
                     }
-                    .padding(.horizontal)
+                    .padding(.bottom)
                 } else if let message = errorMessage {
-                    Text(message).foregroundColor(.red)
+                    Text(message)
+                        .foregroundColor(.red)
+                        .padding(.bottom)
                 }
 
+                // Existing athletes list
                 List(athletes) { athlete in
                     NavigationLink(destination: AthleteDetailView(athleteId: athlete.id)) {
                         Text(athlete.name)
@@ -52,35 +59,50 @@ struct CoachDashboardView: View {
         }
     }
 
-    private func findAthletes() {
-        let db = Firestore.firestore()
-        db.collection("users")
-            .whereField("name", isEqualTo: searchName)
-            .whereField("role", isEqualTo: "Athlete")
-            .getDocuments { snapshot, _ in
-                if let docs = snapshot?.documents, !docs.isEmpty {
-                    searchResults = docs.map { AthleteRef(id: $0.documentID, name: $0.data()["name"] as? String ?? "Athlete") }
-                    errorMessage = nil
-                } else {
-                    searchResults = []
-                    errorMessage = "No athletes found"
-                }
+private func findAthlete() {
+    let db = Firestore.firestore()
+    db.collection("users")
+        .whereField("email", isEqualTo: searchEmail)
+        .whereField("role", isEqualTo: "Athlete")
+        .getDocuments { snapshot, error in
+            if let error = error {
+                // handle Firestore error
+                errorMessage = error.localizedDescription
+                foundAthlete = nil
+            } else if let doc = snapshot?.documents.first {
+                foundAthlete = AthleteRef(
+                    id: doc.documentID,
+                    name: doc.data()["name"] as? String ?? "Athlete"
+                )
+                errorMessage = nil
+            } else {
+                // no matching athlete
+                foundAthlete = nil
+                errorMessage = "Athlete not found"
             }
-    }
+        }
+}
 
-    private func addFoundAthlete(_ athlete: AthleteRef) {
-        let db = Firestore.firestore()
-        let coachId = authViewModel.userProfile.uid
-        guard !coachId.isEmpty else { return }
-        db.collection("coaches").document(coachId)
-            .collection("athletes").document(athlete.id)
-            .setData(["name": athlete.name]) { _ in
-                loadAthletes()
-                searchResults.removeAll { $0.id == athlete.id }
-                searchName = ""
+  private func addFoundAthlete(_ athlete: AthleteRef) {
+    let db = Firestore.firestore()
+    let coachId = authViewModel.userProfile.uid
+    guard !coachId.isEmpty else { return }
+
+    db.collection("coaches")
+        .document(coachId)
+        .collection("athletes")
+        .document(athlete.id)
+        .setData(["name": athlete.name]) { error in
+            if let error = error {
+                // Optionally handle write error
+                errorMessage = error.localizedDescription
             }
-    }
-
+            // Reload the list and clear the search UI
+            loadAthletes()
+            foundAthlete = nil
+            searchEmail = ""
+        }
+}
     private func loadAthletes() {
         let db = Firestore.firestore()
         guard !authViewModel.userProfile.uid.isEmpty else { return }
