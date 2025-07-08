@@ -8,12 +8,14 @@ struct SignUpView: View {
     @State private var name = ""
     @State private var birthDate = Date()
     @State private var sex = "Other"
+    @State private var role = "Athlete"
     @State private var height: Double = 170
     @State private var weight: Double = 70
     @State private var showAlert = false
     @State private var alertMessage = ""
 
     let sexOptions = ["Male", "Female", "Other"]
+    let roleOptions = ["Athlete", "Coach"]
 
     var body: some View {
         NavigationView {
@@ -52,6 +54,14 @@ struct SignUpView: View {
                         .pickerStyle(SegmentedPickerStyle())
                         .padding(.horizontal)
 
+                        Picker("Role", selection: $role) {
+                            ForEach(roleOptions, id: \.self) { option in
+                                Text(option)
+                            }
+                        }
+                        .pickerStyle(SegmentedPickerStyle())
+                        .padding(.horizontal)
+
                         VStack(alignment: .leading) {
                             Text("Height: \(Int(height)) cm")
                             Slider(value: $height, in: 100...250, step: 1)
@@ -68,7 +78,7 @@ struct SignUpView: View {
                     Button(action: {
                         if validateFields() {
                             let dobString = DateFormatter.localizedString(from: birthDate, dateStyle: .short, timeStyle: .none)
-                            authViewModel.signUp(email: email, password: password, name: name, birthDate: dobString, sex: sex, height: height, weight: weight)
+                            authViewModel.signUp(email: email, password: password, name: name, birthDate: dobString, sex: sex, height: height, weight: weight, role: role)
                             presentationMode.wrappedValue.dismiss()
                         }
                     }) {

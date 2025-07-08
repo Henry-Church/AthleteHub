@@ -15,6 +15,8 @@ struct UserSettingsFormView: View {
     @State private var dob = Date()
     @State private var sexOptions = ["Male", "Female", "Other"]
     @State private var selectedSex = "Male"
+    @State private var roleOptions = ["Athlete", "Coach"]
+    @State private var selectedRole = "Athlete"
     @State private var height: Double = 170
     @State private var weight: Double = 70
     @State private var showingImagePicker = false
@@ -55,6 +57,11 @@ struct UserSettingsFormView: View {
                             Text(option)
                         }
                     }
+                    Picker("Role", selection: $selectedRole) {
+                        ForEach(roleOptions, id: \.self) { option in
+                            Text(option)
+                        }
+                    }
                     VStack(alignment: .leading) {
                         Text("Height: \(Int(height)) cm")
                         Slider(value: $height, in: 100...250, step: 1)
@@ -72,6 +79,7 @@ struct UserSettingsFormView: View {
                 userProfile.height = height
                 userProfile.weight = weight
                 userProfile.birthDate = DateFormatter.localizedString(from: dob, dateStyle: .short, timeStyle: .none)
+                userProfile.role = selectedRole
                 if let image = selectedImage {
                     userProfile.profileImage = image
                 }
@@ -80,6 +88,7 @@ struct UserSettingsFormView: View {
             .onAppear {
                 username = userProfile.name
                 selectedSex = userProfile.sex
+                selectedRole = userProfile.role
                 height = userProfile.height
                 weight = userProfile.weight
                 let formatter = DateFormatter()
