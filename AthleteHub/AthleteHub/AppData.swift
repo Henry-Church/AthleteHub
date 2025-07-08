@@ -12,6 +12,9 @@ import FirebaseFirestore
 
 class UserProfile: ObservableObject {
     @Published var uid: String = ""
+    /// Identifier based on the user's display name. This mirrors the name field
+    /// so athletes can be referenced directly by a readable ID.
+    @Published var profileId: String = ""
     @Published var name: String = "Athlete"
     @Published var role: String = "Athlete"
     @Published var profileImage: UIImage? = nil
@@ -209,6 +212,7 @@ class UserProfile: ObservableObject {
             if let data = snapshot?.data() {
                 DispatchQueue.main.async {
                     self.name = data["name"] as? String ?? self.name
+                    self.profileId = data["profileId"] as? String ?? self.name
                     self.role = data["role"] as? String ?? self.role
                     self.phone = data["phone"] as? String ?? self.phone
                     self.birthDate = data["birthDate"] as? String ?? self.birthDate
@@ -241,6 +245,7 @@ class UserProfile: ObservableObject {
         guard !uid.isEmpty else { return }
         let data: [String: Any] = [
             "name": name,
+            "profileId": profileId,
             "role": role,
             "phone": phone,
             "birthDate": birthDate,
@@ -256,6 +261,12 @@ class UserProfile: ObservableObject {
             .collection("profile")
             .document("info")
             .setData(data, merge: true)
+
+        // Also mirror the profile identifier at the root user document
+        Firestore.firestore()
+            .collection("users")
+            .document(uid)
+            .setData(["profileId": profileId, "name": name], merge: true)
     }
 
     /// Save all nutrition goal values under `profile/goals`.
