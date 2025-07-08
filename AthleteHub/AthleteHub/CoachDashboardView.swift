@@ -73,55 +73,54 @@ struct CoachDashboardView: View {
             .navigationTitle("Coach Dashboard")
         }
     }
-
-    private func searchForName() {
-        let db = Firestore.firestore()
-        let trimmed = searchName.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty else {
-            searchResults = []
-            return
+private func searchForName() {
+    let db = Firestore.firestore()
+    let trimmed = searchName.trimmingCharacters(in: .whitespaces)
+    guard !trimmed.isEmpty else {
+        searchResults = []
+        return
+    }
+    db.collection("users")
+        .whereField("role", isEqualTo: "Athlete")
+        .order(by: "profileId")
+        .start(at: [trimmed])
+        .end(at: [trimmed + "\u{f8ff}"])
+        .limit(to: 10)
+        .getDocuments { snapshot, error in
+            if let docs = snapshot?.documents, !docs.isEmpty {
+                searchResults = docs.map {
+                    AthleteRef(
+                        id:   $0.data()["profileId"] as? String ?? "",
+                        uid:  $0.documentID,
+                        name: $0.data()["name"]      as? String ?? "Athlete"
+                    )
+                }
+                errorMessage = nil
+            } else {
+                searchResults = []
+                errorMessage = "No athletes found"
+            }
         }
-        db.collection("users")
-            .whereField("role", isEqualTo: "Athlete")
-            .order(by: "profileId")
-            .start(at: [trimmed])
-            .end(at: [trimmed + "\u{f8ff}"])
-            .limit(to: 10)
-            .getDocuments { snapshot, _ in
-                if let docs = snapshot?.documents, !docs.isEmpty {
-                    searchResults = docs.map {
-                        AthleteRef(
-                            id: $0.data()["profileId"] as? String ?? "",
-                            uid: $0.documentID,
-                            name: $0.data()["name"] as? String ?? "Athlete"
-                        )
-                    }
-                    errorMessage = nil
-                } else {
-                    searchResults = []
-                    errorMessage = "No athletes found"
-                }
-            }
-    }
+}
 
-    private func fetchSuggestedAthletes() {
-        let db = Firestore.firestore()
-        db.collection("users")
-            .whereField("role", isEqualTo: "Athlete")
-            .order(by: "profileId")
-            .limit(to: 5)
-            .getDocuments { snapshot, _ in
-                if let docs = snapshot?.documents {
-                    suggestedAthletes = docs.map {
-                        AthleteRef(
-                            id: $0.data()["profileId"] as? String ?? "",
-                            uid: $0.documentID,
-                            name: $0.data()["name"] as? String ?? "Athlete"
-                        )
-                    }
+private func fetchSuggestedAthletes() {
+    let db = Firestore.firestore()
+    db.collection("users")
+        .whereField("role", isEqualTo: "Athlete")
+        .order(by: "profileId")
+        .limit(to: 5)
+        .getDocuments { snapshot, error in
+            if let docs = snapshot?.documents {
+                suggestedAthletes = docs.map {
+                    AthleteRef(
+                        id:   $0.data()["profileId"] as? String ?? "",
+                        uid:  $0.documentID,
+                        name: $0.data()["name"]      as? String ?? "Athlete"
+                    )
                 }
             }
-    }
+        }
+}
 
     private func addFoundAthlete(_ athlete: AthleteRef) {
         let db = Firestore.firestore()

@@ -84,6 +84,7 @@ struct UserSettingsFormView: View {
                 if let image = selectedImage {
                     userProfile.profileImage = image
                 }
+                userProfile.saveToFirestore()
                 presentationMode.wrappedValue.dismiss()
             })
             .onAppear {
