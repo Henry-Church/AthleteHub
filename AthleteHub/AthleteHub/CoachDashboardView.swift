@@ -8,101 +8,120 @@ struct AthleteRef: Identifiable {
 
 struct CoachDashboardView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
-    @State private var searchEmail = ""
-    @State private var foundAthlete: AthleteRef?
+    @State private var searchName = ""
+    @State private var searchResults: [AthleteRef] = []
+    @State private var suggestedAthletes: [AthleteRef] = []
     @State private var errorMessage: String?
     @State private var athletes: [AthleteRef] = []
 
     var body: some View {
         NavigationView {
             VStack {
-                // Search bar
                 HStack {
-                    TextField("Athlete email", text: $searchEmail)
+                    TextField("Athlete name", text: $searchName)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
-                    Button("Find") {
-                        errorMessage = nil
-                        foundAthlete = nil
-                        findAthlete()
-                    }
-                    .disabled(searchEmail.trimmingCharacters(in: .whitespaces).isEmpty)
+                        .onChange(of: searchName) { _ in searchForName() }
                 }
                 .padding()
 
-                // Search result / error
-                if let athlete = foundAthlete {
-                    Button("Add \(athlete.name)") {
-                        addFoundAthlete(athlete)
-                        // clear the search
-                        searchEmail = ""
-                        foundAthlete = nil
+                if !searchResults.isEmpty {
+                    VStack(alignment: .leading) {
+                        Text("Results")
+                            .font(.headline)
+                        ForEach(searchResults) { result in
+                            HStack {
+                                Text(result.name)
+                                Spacer()
+                                Button("Add") { addFoundAthlete(result) }
+                            }
+                        }
                     }
-                    .padding(.bottom)
-                } else if let message = errorMessage {
-                    Text(message)
+                    .padding(.horizontal)
+                } else if !searchName.isEmpty {
+                    Text(errorMessage ?? "No athletes found")
                         .foregroundColor(.red)
-                        .padding(.bottom)
+                        .padding(.horizontal)
+                } else if !suggestedAthletes.isEmpty {
+                    VStack(alignment: .leading) {
+                        Text("Suggested")
+                            .font(.headline)
+                        ForEach(suggestedAthletes) { suggestion in
+                            HStack {
+                                Text(suggestion.name)
+                                Spacer()
+                                Button("Add") { addFoundAthlete(suggestion) }
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
                 }
 
-                // Existing athletes list
                 List(athletes) { athlete in
                     NavigationLink(destination: AthleteDetailView(athleteId: athlete.id)) {
                         Text(athlete.name)
                     }
                 }
                 .listStyle(InsetGroupedListStyle())
-                .onAppear { loadAthletes() }
+                .onAppear {
+                    loadAthletes()
+                    fetchSuggestedAthletes()
+                }
             }
             .navigationTitle("Coach Dashboard")
         }
     }
+}
 
-private func findAthlete() {
+private func searchForName() {
     let db = Firestore.firestore()
+    let trimmed = searchName.trimmingCharacters(in: .whitespaces)
+    guard !trimmed.isEmpty else {
+        searchResults = []
+        return
+    }
     db.collection("users")
-        .whereField("email", isEqualTo: searchEmail)
         .whereField("role", isEqualTo: "Athlete")
-        .getDocuments { snapshot, error in
-            if let error = error {
-                // handle Firestore error
-                errorMessage = error.localizedDescription
-                foundAthlete = nil
-            } else if let doc = snapshot?.documents.first {
-                foundAthlete = AthleteRef(
-                    id: doc.documentID,
-                    name: doc.data()["name"] as? String ?? "Athlete"
-                )
+        .order(by: "name")
+        .start(at: [trimmed])
+        .end(at: [trimmed + "\u{f8ff}"])
+        .limit(to: 10)
+        .getDocuments { snapshot, _ in
+            if let docs = snapshot?.documents, !docs.isEmpty {
+                searchResults = docs.map { AthleteRef(id: $0.documentID, name: $0.data()["name"] as? String ?? "Athlete") }
                 errorMessage = nil
             } else {
-                // no matching athlete
-                foundAthlete = nil
-                errorMessage = "Athlete not found"
+                searchResults = []
+                errorMessage = "No athletes found"
             }
         }
 }
 
-  private func addFoundAthlete(_ athlete: AthleteRef) {
+private func fetchSuggestedAthletes() {
+    let db = Firestore.firestore()
+    db.collection("users")
+        .whereField("role", isEqualTo: "Athlete")
+        .order(by: "name")
+        .limit(to: 5)
+        .getDocuments { snapshot, _ in
+            if let docs = snapshot?.documents {
+                suggestedAthletes = docs.map { AthleteRef(id: $0.documentID, name: $0.data()["name"] as? String ?? "Athlete") }
+            }
+        }
+}
+
+private func addFoundAthlete(_ athlete: AthleteRef) {
     let db = Firestore.firestore()
     let coachId = authViewModel.userProfile.uid
     guard !coachId.isEmpty else { return }
-
-    db.collection("coaches")
-        .document(coachId)
-        .collection("athletes")
-        .document(athlete.id)
-        .setData(["name": athlete.name]) { error in
-            if let error = error {
-                // Optionally handle write error
-                errorMessage = error.localizedDescription
-            }
-            // Reload the list and clear the search UI
+    db.collection("coaches").document(coachId)
+        .collection("athletes").document(athlete.id)
+        .setData(["name": athlete.name]) { _ in
             loadAthletes()
-            foundAthlete = nil
-            searchEmail = ""
+            searchResults.removeAll { $0.id == athlete.id }
+            searchName = ""
         }
 }
+  
     private func loadAthletes() {
         let db = Firestore.firestore()
         guard !authViewModel.userProfile.uid.isEmpty else { return }
