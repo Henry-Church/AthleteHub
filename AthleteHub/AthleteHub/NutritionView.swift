@@ -13,25 +13,34 @@ struct NutritionView: View {
     @State private var showingSetGoals = false
     @State private var showingManualEntry = false
     @State private var activeMetric: MetricType?
-    
+
     private func percentage(from text: String?) -> Double? {
         guard let stripped = text?.replacingOccurrences(of: "%", with: ""),
               let value = Double(stripped) else { return nil }
         return value
     }
+
+    private func intakeValue(_ healthValue: Double?, fallback: String?) -> Double {
+        healthValue ?? Double(fallback ?? "0") ?? 0
+    }
+
+    private func percent(intake: Double, goal: String?) -> String {
+        let g = Double(goal ?? "0") ?? 0
+        guard g > 0 else { return "0%" }
+        return "\(Int((intake / g) * 100))%"
+    }
     
     private var overallNutritionScore: Int {
-        let percentages = [
-            userProfile.caloriesPercentage,
-            userProfile.proteinPercentage,
-            userProfile.carbsPercentage,
-            userProfile.fatPercentage,
-            userProfile.waterPercentage,
-            userProfile.fiberPercentage
-        ]
-        let values = percentages.compactMap { percentage(from: $0) }
-        guard !values.isEmpty else { return 0 }
-        return Int(values.reduce(0, +) / Double(values.count))
+        let metrics: [Double] = [
+            percent(intake: intakeValue(healthManager.caloriesConsumed, fallback: userProfile.caloriesConsumed), goal: userProfile.caloriesGoal),
+            percent(intake: intakeValue(healthManager.proteinIntake, fallback: userProfile.proteinIntake), goal: userProfile.proteinGoal),
+            percent(intake: intakeValue(healthManager.carbsIntake, fallback: userProfile.carbsIntake), goal: userProfile.carbsGoal),
+            percent(intake: intakeValue(healthManager.fatIntake, fallback: userProfile.fatIntake), goal: userProfile.fatGoal),
+            percent(intake: intakeValue(healthManager.waterIntake, fallback: userProfile.waterIntake), goal: userProfile.waterGoal),
+            percent(intake: intakeValue(healthManager.fiberIntake, fallback: userProfile.fiberIntake), goal: userProfile.fiberGoal)
+        ].compactMap { Double($0.replacingOccurrences(of: "%", with: "")) }
+        guard !metrics.isEmpty else { return 0 }
+        return Int(metrics.reduce(0, +) / Double(metrics.count))
     }
     
     private func generateNutritionInsights() -> [String] {
@@ -41,17 +50,21 @@ struct NutritionView: View {
         }
         
         var insights: [String] = []
-        if let p = percentage(from: userProfile.caloriesPercentage) {
-            insights.append(message(for: p, metric: "calorie"))
+        let cals = intakeValue(healthManager.caloriesConsumed, fallback: userProfile.caloriesConsumed)
+        let calsPct = Double(percent(intake: cals, goal: userProfile.caloriesGoal).replacingOccurrences(of: "%", with: "")) ?? 0
+        if calsPct > 0 {
+            insights.append(message(for: calsPct, metric: "calorie"))
         } else {
             insights.append("No calorie data yet.")
         }
-        if let p = percentage(from: userProfile.proteinPercentage) {
-            insights.append(message(for: p, metric: "protein"))
-        }
-        if let p = percentage(from: userProfile.waterPercentage) {
-            insights.append(message(for: p, metric: "water"))
-        }
+
+        let protein = intakeValue(healthManager.proteinIntake, fallback: userProfile.proteinIntake)
+        let proteinPct = Double(percent(intake: protein, goal: userProfile.proteinGoal).replacingOccurrences(of: "%", with: "")) ?? 0
+        if proteinPct > 0 { insights.append(message(for: proteinPct, metric: "protein")) }
+
+        let water = intakeValue(healthManager.waterIntake, fallback: userProfile.waterIntake)
+        let waterPct = Double(percent(intake: water, goal: userProfile.waterGoal).replacingOccurrences(of: "%", with: "")) ?? 0
+        if waterPct > 0 { insights.append(message(for: waterPct, metric: "water")) }
         return insights
     }
     
@@ -93,9 +106,9 @@ struct NutritionView: View {
                     NutritionRingCard(
                         title:      "Calories",
                         icon:       "flame.fill",
-                        value:      "\(userProfile.caloriesConsumed  ?? "0") kcal",
+                        value:      String(format: "%.0f kcal", intakeValue(healthManager.caloriesConsumed, fallback: userProfile.caloriesConsumed)),
                         goal:       "\(userProfile.caloriesGoal      ?? "0") kcal",
-                        percentage: userProfile.caloriesPercentage  ?? "0%",
+                        percentage: percent(intake: intakeValue(healthManager.caloriesConsumed, fallback: userProfile.caloriesConsumed), goal: userProfile.caloriesGoal),
                         colorScheme: colorScheme
                     ) {
                         activeMetric = .calories
@@ -105,9 +118,9 @@ struct NutritionView: View {
                     NutritionRingCard(
                         title:      "Protein",
                         icon:       "bolt.fill",
-                        value:      "\(userProfile.proteinIntake    ?? "0") g",
+                        value:      String(format: "%.0f g", intakeValue(healthManager.proteinIntake, fallback: userProfile.proteinIntake)),
                         goal:       "\(userProfile.proteinGoal      ?? "0") g",
-                        percentage: userProfile.proteinPercentage  ?? "0%",
+                        percentage: percent(intake: intakeValue(healthManager.proteinIntake, fallback: userProfile.proteinIntake), goal: userProfile.proteinGoal),
                         colorScheme: colorScheme
                     ) {
                         activeMetric = .protein
@@ -117,9 +130,9 @@ struct NutritionView: View {
                     NutritionRingCard(
                         title:      "Carbs",
                         icon:       "leaf.fill",
-                        value:      "\(userProfile.carbsIntake      ?? "0") g",
+                        value:      String(format: "%.0f g", intakeValue(healthManager.carbsIntake, fallback: userProfile.carbsIntake)),
                         goal:       "\(userProfile.carbsGoal        ?? "0") g",
-                        percentage: userProfile.carbsPercentage    ?? "0%",
+                        percentage: percent(intake: intakeValue(healthManager.carbsIntake, fallback: userProfile.carbsIntake), goal: userProfile.carbsGoal),
                         colorScheme: colorScheme
                     ) {
                         activeMetric = .carbs
@@ -129,9 +142,9 @@ struct NutritionView: View {
                     NutritionRingCard(
                         title:      "Fat",
                         icon:       "drop.fill",
-                        value:      "\(userProfile.fatIntake        ?? "0") g",
+                        value:      String(format: "%.0f g", intakeValue(healthManager.fatIntake, fallback: userProfile.fatIntake)),
                         goal:       "\(userProfile.fatGoal          ?? "0") g",
-                        percentage: userProfile.fatPercentage      ?? "0%",
+                        percentage: percent(intake: intakeValue(healthManager.fatIntake, fallback: userProfile.fatIntake), goal: userProfile.fatGoal),
                         colorScheme: colorScheme
                     ) {
                         activeMetric = .fat
@@ -140,13 +153,9 @@ struct NutritionView: View {
                 .padding(.horizontal)
 
                 WaterIntakeCard(
-                    intake:      String(format: "%.1f", healthManager.waterIntake ?? Double(userProfile.waterIntake ?? "0") ?? 0),
+                    intake:      String(format: "%.1f", intakeValue(healthManager.waterIntake, fallback: userProfile.waterIntake)),
                     goal:        userProfile.waterGoal    ?? "0",
-                    percentage:  {
-                        let intake = healthManager.waterIntake ?? Double(userProfile.waterIntake ?? "0") ?? 0
-                        let goal = Double(userProfile.waterGoal ?? "0") ?? 1
-                        return "\(Int((intake / goal) * 100))%"
-                    }(),
+                    percentage:  percent(intake: intakeValue(healthManager.waterIntake, fallback: userProfile.waterIntake), goal: userProfile.waterGoal),
                     colorScheme: colorScheme
                 ) {
                     activeMetric = .water
@@ -658,13 +667,17 @@ struct NutritionRingCard: View {
         private var metricCard: some View {
             switch metric {
             case .calories:
-                return AnyView(NutritionRingCard(title: "Calories", icon: "flame.fill", value: userProfile.caloriesConsumed ?? "0", goal: userProfile.caloriesGoal ?? "0 cal", percentage: userProfile.caloriesPercentage ?? "0%", colorScheme: colorScheme))
+                let intake = intakeValue(healthManager.caloriesConsumed, fallback: userProfile.caloriesConsumed)
+                return AnyView(NutritionRingCard(title: "Calories", icon: "flame.fill", value: String(format: "%.0f", intake), goal: userProfile.caloriesGoal ?? "0 cal", percentage: percent(intake: intake, goal: userProfile.caloriesGoal), colorScheme: colorScheme))
             case .protein:
-                return AnyView(NutritionRingCard(title: "Protein", icon: "bolt.fill", value: userProfile.proteinIntake ?? "0", goal: userProfile.proteinGoal ?? "0 g", percentage: userProfile.proteinPercentage ?? "0%", colorScheme: colorScheme))
+                let intake = intakeValue(healthManager.proteinIntake, fallback: userProfile.proteinIntake)
+                return AnyView(NutritionRingCard(title: "Protein", icon: "bolt.fill", value: String(format: "%.0f", intake), goal: userProfile.proteinGoal ?? "0 g", percentage: percent(intake: intake, goal: userProfile.proteinGoal), colorScheme: colorScheme))
             case .carbs:
-                return AnyView(NutritionRingCard(title: "Carbs", icon: "leaf.fill", value: userProfile.carbsIntake ?? "0", goal: userProfile.carbsGoal ?? "0 g", percentage: userProfile.carbsPercentage ?? "0%", colorScheme: colorScheme))
+                let intake = intakeValue(healthManager.carbsIntake, fallback: userProfile.carbsIntake)
+                return AnyView(NutritionRingCard(title: "Carbs", icon: "leaf.fill", value: String(format: "%.0f", intake), goal: userProfile.carbsGoal ?? "0 g", percentage: percent(intake: intake, goal: userProfile.carbsGoal), colorScheme: colorScheme))
             case .fat:
-                return AnyView(NutritionRingCard(title: "Fat", icon: "drop.fill", value: userProfile.fatIntake ?? "0", goal: userProfile.fatGoal ?? "0 g", percentage: userProfile.fatPercentage ?? "0%", colorScheme: colorScheme))
+                let intake = intakeValue(healthManager.fatIntake, fallback: userProfile.fatIntake)
+                return AnyView(NutritionRingCard(title: "Fat", icon: "drop.fill", value: String(format: "%.0f", intake), goal: userProfile.fatGoal ?? "0 g", percentage: percent(intake: intake, goal: userProfile.fatGoal), colorScheme: colorScheme))
             case .water:
                 let intake = healthManager.waterIntake ?? Double(userProfile.waterIntake ?? "0") ?? 0
                 let pct = {
@@ -678,13 +691,13 @@ struct NutritionRingCard: View {
         private var currentValue: Double {
             switch metric {
             case .calories:
-                return Double(userProfile.caloriesConsumed ?? "0") ?? 0
+                return intakeValue(healthManager.caloriesConsumed, fallback: userProfile.caloriesConsumed)
             case .protein:
-                return Double(userProfile.proteinIntake ?? "0") ?? 0
+                return intakeValue(healthManager.proteinIntake, fallback: userProfile.proteinIntake)
             case .carbs:
-                return Double(userProfile.carbsIntake ?? "0") ?? 0
+                return intakeValue(healthManager.carbsIntake, fallback: userProfile.carbsIntake)
             case .fat:
-                return Double(userProfile.fatIntake ?? "0") ?? 0
+                return intakeValue(healthManager.fatIntake, fallback: userProfile.fatIntake)
             case .water:
                 return healthManager.waterIntake ?? Double(userProfile.waterIntake ?? "0") ?? 0
             }

@@ -150,6 +150,11 @@ class HealthManager: ObservableObject {
             HKObjectType.quantityType(forIdentifier: .height)!,
             HKObjectType.quantityType(forIdentifier: .oxygenSaturation)!,
             HKObjectType.quantityType(forIdentifier: .dietaryWater)!,
+            HKObjectType.quantityType(forIdentifier: .dietaryEnergyConsumed)!,
+            HKObjectType.quantityType(forIdentifier: .dietaryProtein)!,
+            HKObjectType.quantityType(forIdentifier: .dietaryCarbohydrates)!,
+            HKObjectType.quantityType(forIdentifier: .dietaryFatTotal)!,
+            HKObjectType.quantityType(forIdentifier: .dietaryFiber)!,
             HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!,
             HKObjectType.workoutType() // Needed for HKWorkout (includes totalDistance)
         ]
@@ -231,6 +236,11 @@ class HealthManager: ObservableObject {
         fetchSleepData { _ in self.save() }
         fetchWorkouts { _ in self.save() }
         fetchWaterIntake { _ in self.save() }
+        fetchCaloriesConsumed { _ in self.save() }
+        fetchProteinIntake { _ in self.save() }
+        fetchCarbsIntake { _ in self.save() }
+        fetchFatIntake { _ in self.save() }
+        fetchFiberIntake { _ in self.save() }
     }
 
 
@@ -768,6 +778,86 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
             self.height = $0
             completion($0)
         }
+    }
+
+    func fetchCaloriesConsumed(completion: @escaping (Double?) -> Void) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .dietaryEnergyConsumed) else {
+            return completion(nil)
+        }
+        let startOfDay = Calendar.current.startOfDay(for: Date())
+        let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: Date(), options: .strictStartDate)
+        let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, _ in
+            let cals = result?.sumQuantity()?.doubleValue(for: .kilocalorie())
+            DispatchQueue.main.async {
+                self.caloriesConsumed = cals
+                completion(cals)
+            }
+        }
+        healthStore.execute(query)
+    }
+
+    func fetchProteinIntake(completion: @escaping (Double?) -> Void) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .dietaryProtein) else {
+            return completion(nil)
+        }
+        let startOfDay = Calendar.current.startOfDay(for: Date())
+        let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: Date(), options: .strictStartDate)
+        let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, _ in
+            let grams = result?.sumQuantity()?.doubleValue(for: .gram())
+            DispatchQueue.main.async {
+                self.proteinIntake = grams
+                completion(grams)
+            }
+        }
+        healthStore.execute(query)
+    }
+
+    func fetchCarbsIntake(completion: @escaping (Double?) -> Void) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .dietaryCarbohydrates) else {
+            return completion(nil)
+        }
+        let startOfDay = Calendar.current.startOfDay(for: Date())
+        let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: Date(), options: .strictStartDate)
+        let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, _ in
+            let grams = result?.sumQuantity()?.doubleValue(for: .gram())
+            DispatchQueue.main.async {
+                self.carbsIntake = grams
+                completion(grams)
+            }
+        }
+        healthStore.execute(query)
+    }
+
+    func fetchFatIntake(completion: @escaping (Double?) -> Void) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .dietaryFatTotal) else {
+            return completion(nil)
+        }
+        let startOfDay = Calendar.current.startOfDay(for: Date())
+        let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: Date(), options: .strictStartDate)
+        let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, _ in
+            let grams = result?.sumQuantity()?.doubleValue(for: .gram())
+            DispatchQueue.main.async {
+                self.fatIntake = grams
+                completion(grams)
+            }
+        }
+        healthStore.execute(query)
+    }
+
+    func fetchFiberIntake(completion: @escaping (Double?) -> Void) {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .dietaryFiber) else {
+            return completion(nil)
+        }
+        let startOfDay = Calendar.current.startOfDay(for: Date())
+        let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: Date(), options: .strictStartDate)
+        let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, _ in
+            let grams = result?.sumQuantity()?.doubleValue(for: .gram())
+            DispatchQueue.main.async {
+                self.fiberIntake = grams
+                completion(grams)
+            }
+        }
+        healthStore.execute(query)
     }
 
     func fetchWaterIntake(completion: @escaping (Double?) -> Void) {
