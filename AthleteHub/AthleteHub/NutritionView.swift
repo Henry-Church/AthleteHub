@@ -31,6 +31,15 @@ struct NutritionView: View {
         return value
     }
 
+    private func intakeValue(_ healthValue: Double?, fallback: String?) -> Double {
+        healthValue ?? Double(fallback ?? "0") ?? 0
+    }
+
+    private func percent(intake: Double, goal: String?) -> String {
+        let g = Double(goal ?? "0") ?? 0
+        guard g > 0 else { return "0%" }
+        return "\(Int((intake / g) * 100))%"
+    }
     
     private var overallNutritionScore: Int {
         let metrics: [Double] = [
