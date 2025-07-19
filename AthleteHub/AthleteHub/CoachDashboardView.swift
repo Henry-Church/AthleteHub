@@ -187,11 +187,35 @@ struct AthleteDetailView: View {
     @StateObject private var profile = UserProfile()
 
     var body: some View {
-        DashboardView()
-            .environmentObject(profile)
-            .onAppear {
-                profile.uid = athleteId
-                profile.loadFromFirestore()
-            }
+        TabView {
+            DashboardView()
+                .tabItem {
+                    Image(systemName: "house.fill")
+                    Text("Dashboard")
+                }
+
+            TrainingView()
+                .tabItem {
+                    Image(systemName: "figure.walk")
+                    Text("Training")
+                }
+
+            NutritionView()
+                .tabItem {
+                    Image(systemName: "fork.knife")
+                    Text("Nutrition")
+                }
+
+            RecoveryView()
+                .tabItem {
+                    Image(systemName: "bed.double")
+                    Text("Recovery")
+                }
+        }
+        .environmentObject(profile)
+        .onAppear {
+            profile.uid = athleteId
+            profile.loadFromFirestore()
+        }
     }
 }
