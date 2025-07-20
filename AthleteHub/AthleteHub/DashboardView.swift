@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DashboardView: View {
     @EnvironmentObject var userProfile: UserProfile
+    @EnvironmentObject var coachSelection: CoachSelection
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var healthManager: HealthManager
 
@@ -33,6 +34,7 @@ struct DashboardView: View {
         GeometryReader { geometry in
             ScrollView {
                 VStack(alignment: .leading, spacing: 32) {
+                    AthletePicker()
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Hey, \(userProfile.name)!")
                             .font(.largeTitle)

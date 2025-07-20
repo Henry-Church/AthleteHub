@@ -15,6 +15,7 @@ struct AthleteHubApp: App {
     @StateObject private var authViewModel = AuthViewModel()
     @StateObject private var healthManager = HealthManager()
     @StateObject private var scheduleManager = TrainingScheduleManager()
+    @StateObject private var coachSelection = CoachSelection()
     @State private var isLoading = true
 
     var body: some Scene {
@@ -34,6 +35,7 @@ struct AthleteHubApp: App {
                     .environmentObject(authViewModel.userProfile)
                     .environmentObject(healthManager)
                     .environmentObject(scheduleManager)
+                    .environmentObject(coachSelection)
             }
         }
     }

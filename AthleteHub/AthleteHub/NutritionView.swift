@@ -20,6 +20,7 @@ struct NutritionView: View {
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var userProfile: UserProfile
     @EnvironmentObject var healthManager: HealthManager
+    @EnvironmentObject var coachSelection: CoachSelection
     
     @State private var showingSetGoals = false
     @State private var showingManualEntry = false
@@ -82,6 +83,7 @@ struct NutritionView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                AthletePicker()
                 // Header
                 HStack {
                     Text("Nutrition Dashboard")

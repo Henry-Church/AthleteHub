@@ -4,6 +4,7 @@ import SwiftUI
 
 struct MainView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    @EnvironmentObject var coachSelection: CoachSelection
 
     var body: some View {
         Group {
@@ -11,24 +12,28 @@ struct MainView: View {
                 if authViewModel.userProfile.role == "Coach" {
                     TabView {
                         CoachDashboardView()
+                            .environmentObject(coachSelection)
                             .tabItem {
                                 Image(systemName: "person.3.fill")
                                 Text("Athletes")
                             }
 
                         TrainingView()
+                            .environmentObject(coachSelection.athleteProfile)
                             .tabItem {
                                 Image(systemName: "figure.walk")
                                 Text("Training")
                             }
 
                         NutritionView()
+                            .environmentObject(coachSelection.athleteProfile)
                             .tabItem {
                                 Image(systemName: "fork.knife")
                                 Text("Nutrition")
                             }
 
                         RecoveryView()
+                            .environmentObject(coachSelection.athleteProfile)
                             .tabItem {
                                 Image(systemName: "bed.double")
                                 Text("Recovery")
