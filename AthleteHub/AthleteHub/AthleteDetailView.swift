@@ -8,8 +8,7 @@ struct AthleteDetailView: View {
         DashboardView()
             .environmentObject(profile)
             .onAppear {
-                profile.uid = athleteId
-                profile.loadFromFirestore()
+                profile.loadFromFirestore(for: athleteId)
             }
     }
 }

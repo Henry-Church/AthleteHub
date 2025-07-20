@@ -200,13 +200,19 @@ class UserProfile: ObservableObject {
     
     // MARK: - Firestore Integration
     /// Load persistent profile data and nutrition goals from Firestore.
-    func loadFromFirestore() {
-        guard let currentUser = Auth.auth().currentUser else { return }
-        self.uid = currentUser.uid
-        self.email = currentUser.email ?? ""
+    /// - Parameter uid: Optional UID to load a different user's profile. If nil,
+    ///   the currently authenticated user's data is loaded.
+    func loadFromFirestore(for uid: String? = nil) {
+        if let override = uid {
+            self.uid = override
+        } else if let currentUser = Auth.auth().currentUser {
+            self.uid = currentUser.uid
+            self.email = currentUser.email ?? ""
+        }
+        guard !self.uid.isEmpty else { return }
 
         let db = Firestore.firestore()
-        let profileRef = db.collection("users").document(uid).collection("profile")
+        let profileRef = db.collection("users").document(self.uid).collection("profile")
 
         profileRef.document("info").getDocument { snapshot, _ in
             if let data = snapshot?.data() {
