@@ -17,8 +17,7 @@ struct AthleteMetrics {
 
 struct CoachDashboardView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
-    @State private var athletes: [AthleteRef] = []
-    @State private var selectedIndex: Int = 0
+    @EnvironmentObject var coachSelection: CoachSelection
     @State private var metrics: AthleteMetrics? = nil
 
     @State private var searchName = ""
@@ -30,15 +29,15 @@ struct CoachDashboardView: View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    if !athletes.isEmpty {
-                        Picker("Athlete", selection: $selectedIndex) {
-                            ForEach(athletes.indices, id: \.\u2060self) { idx in
-                                Text(athletes[idx].name).tag(idx)
+                    if !coachSelection.athletes.isEmpty {
+                        Picker("Athlete", selection: $coachSelection.selectedIndex) {
+                            ForEach(coachSelection.athletes.indices, id: \.self) { idx in
+                                Text(coachSelection.athletes[idx].name).tag(idx)
                             }
                         }
                         .pickerStyle(MenuPickerStyle())
-                        .onChange(of: selectedIndex) { _ in
-                            loadMetrics(for: athletes[selectedIndex])
+                        .onChange(of: coachSelection.selectedIndex) { _ in
+                            loadMetrics(for: coachSelection.athletes[coachSelection.selectedIndex])
                         }
                         .padding(.horizontal)
                     }
@@ -50,8 +49,7 @@ struct CoachDashboardView: View {
                         }
                         .padding(.horizontal)
 
-                        NavigationLink(
-                            destination: AthleteDetailView(athleteId: athletes[selectedIndex].uid)
+                            destination: AthleteDetailView(athleteId: coachSelection.athletes[coachSelection.selectedIndex].uid)
                         ) {
                             Text("View Full Dashboard")
                                 .frame(maxWidth: .infinity)
@@ -59,8 +57,9 @@ struct CoachDashboardView: View {
                                 .background(Color.blue.opacity(0.2))
                                 .cornerRadius(8)
                         }
+                        AthleteInfoCard(profile: coachSelection.athleteProfile)
                         .padding(.horizontal)
-                    } else if !athletes.isEmpty {
+                    } else if !coachSelection.athletes.isEmpty {
                         Text("No metrics available")
                             .foregroundColor(.secondary)
                             .padding(.horizontal)
@@ -120,25 +119,11 @@ struct CoachDashboardView: View {
 
     // MARK: - Athlete Loading
     private func loadAthletes() {
-        let db = Firestore.firestore()
         let coachId = authViewModel.userProfile.uid
-        guard !coachId.isEmpty else { return }
-        db.collection("coaches").document(coachId)
-            .collection("athletes")
-            .getDocuments { snapshot, _ in
-                if let docs = snapshot?.documents {
-                    athletes = docs.map {
-                        AthleteRef(
-                            id: $0.documentID,
-                            uid: $0.data()["uid"] as? String ?? "",
-                            name: $0.data()["name"] as? String ?? "Athlete"
-                        )
-                    }
-                    if !athletes.isEmpty {
-                        loadMetrics(for: athletes[selectedIndex])
-                    }
-                }
-            }
+        coachSelection.loadAthletes(for: coachId)
+        if !coachSelection.athletes.isEmpty {
+            loadMetrics(for: coachSelection.athletes[coachSelection.selectedIndex])
+        }
     }
 
     private func loadMetrics(for athlete: AthleteRef) {
@@ -252,6 +237,26 @@ struct MetricCard: View {
         .frame(maxWidth: .infinity)
         .padding()
         .background(Color(.secondarySystemBackground))
+struct AthleteInfoCard: View {
+    let profile: UserProfile
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(profile.name).font(.headline)
+            HStack {
+                Text("Age: (profile.age)")
+                Spacer()
+                Text(String(format: "BMI: %.1f", profile.bmi))
+            }
+            .font(.caption)
+        }
+        .padding()
+        .frame(maxWidth: .infinity)
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(12)
+    }
+}
+
         .cornerRadius(12)
     }
 }

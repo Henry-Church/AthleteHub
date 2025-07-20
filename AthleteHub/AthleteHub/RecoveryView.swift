@@ -65,6 +65,7 @@ struct RecoveryView: View {
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var userProfile: UserProfile
     @EnvironmentObject var healthManager: HealthManager
+    @EnvironmentObject var coachSelection: CoachSelection
     @State private var showingSetRecoveryGoals = false
     @State private var showingManualEntry = false
 
@@ -101,9 +102,9 @@ struct RecoveryView: View {
     ]
 }
 
-    var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                AthletePicker()
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Text("Recovery Dashboard")
