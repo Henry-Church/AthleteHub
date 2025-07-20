@@ -11,6 +11,7 @@ struct TrainingView: View {
     @EnvironmentObject var healthManager: HealthManager
     @EnvironmentObject var scheduleManager: TrainingScheduleManager
     @EnvironmentObject var coachSelection: CoachSelection
+    @EnvironmentObject var userProfile: UserProfile
     @State private var showingSetGoals = false
     @State private var showingManualEntry = false
     
@@ -21,7 +22,9 @@ struct TrainingView: View {
         let backgroundColor = colorScheme == .dark ? customYellow.opacity(0.1) : Color(.systemGray6)
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                AthletePicker()
+                if userProfile.role == "Coach" {
+                    AthletePicker()
+                }
                 HStack {
                     Text("Training Dashboard")
                         .font(.title)

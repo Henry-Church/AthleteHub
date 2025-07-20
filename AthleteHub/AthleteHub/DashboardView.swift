@@ -34,7 +34,9 @@ struct DashboardView: View {
         GeometryReader { geometry in
             ScrollView {
                 VStack(alignment: .leading, spacing: 32) {
-                    AthletePicker()
+                    if userProfile.role == "Coach" {
+                        AthletePicker()
+                    }
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Hey, \(userProfile.name)!")
                             .font(.largeTitle)
