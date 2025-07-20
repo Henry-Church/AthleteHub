@@ -104,7 +104,9 @@ struct RecoveryView: View {
 
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                AthletePicker()
+                if userProfile.role == "Coach" {
+                    AthletePicker()
+                }
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Text("Recovery Dashboard")
