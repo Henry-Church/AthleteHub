@@ -49,6 +49,17 @@ struct CoachDashboardView: View {
                             MetricCard(title: "Recovery", value: "\(m.recoveryScore)")
                         }
                         .padding(.horizontal)
+
+                        NavigationLink(
+                            destination: AthleteDetailView(athleteId: athletes[selectedIndex].uid)
+                        ) {
+                            Text("View Full Dashboard")
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.blue.opacity(0.2))
+                                .cornerRadius(8)
+                        }
+                        .padding(.horizontal)
                     } else if !athletes.isEmpty {
                         Text("No metrics available")
                             .foregroundColor(.secondary)
@@ -277,8 +288,7 @@ struct AthleteDetailView: View {
         }
         .environmentObject(profile)
         .onAppear {
-            profile.uid = athleteId
-            profile.loadFromFirestore()
+            profile.loadFromFirestore(for: athleteId)
         }
     }
 }
