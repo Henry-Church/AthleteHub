@@ -131,8 +131,7 @@ struct CoachDashboardView: View {
         formatter.dateFormat = "yyyy-MM-dd"
         let today = formatter.string(from: Date())
         let db = Firestore.firestore()
-        db.collection("users")
-            .collection("athletes")
+        db.collection("athletes")
             .document(athlete.uid)
             .collection("days")
             .document(today)
