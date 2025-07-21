@@ -212,36 +212,45 @@ class UserProfile: ObservableObject {
         guard !self.uid.isEmpty else { return }
 
         let db = Firestore.firestore()
-        let profileRef = db.collection("users").document(self.uid).collection("profile")
 
-        profileRef.document("info").getDocument { snapshot, _ in
-            if let data = snapshot?.data() {
-                DispatchQueue.main.async {
-                    self.name = data["name"] as? String ?? self.name
-                    self.profileId = data["profileId"] as? String ?? self.name
-                    self.role = data["role"] as? String ?? self.role
-                    self.phone = data["phone"] as? String ?? self.phone
-                    self.birthDate = data["birthDate"] as? String ?? self.birthDate
-                    self.sex = data["sex"] as? String ?? self.sex
-                    self.height = data["height"] as? Double ?? self.height
-                    self.weight = data["weight"] as? Double ?? self.weight
-                    self.age = data["age"] as? Int ?? self.age
+        var loaded = false
+        func load(from rolePath: String) {
+            let ref = db.collection("users").document(rolePath).collection(self.uid).collection("profileData")
+            ref.document("info").getDocument { snapshot, _ in
+                if let data = snapshot?.data(), !loaded {
+                    DispatchQueue.main.async {
+                        let first = data["firstName"] as? String ?? ""
+                        let last = data["lastName"] as? String ?? ""
+                        let combined = "\(first) \(last)".trimmingCharacters(in: .whitespaces)
+                        self.name = combined.isEmpty ? (data["name"] as? String ?? self.name) : combined
+                        self.profileId = data["profileId"] as? String ?? self.name
+                        self.role = rolePath == "coaches" ? "Coach" : "Athlete"
+                        self.phone = data["phone"] as? String ?? self.phone
+                        self.birthDate = data["birthDate"] as? String ?? self.birthDate
+                        self.sex = data["sex"] as? String ?? self.sex
+                        self.height = data["height"] as? Double ?? self.height
+                        self.weight = data["weight"] as? Double ?? self.weight
+                        self.age = data["age"] as? Int ?? self.age
+                    }
+                    loaded = true
+                    ref.document("goals").getDocument { snap, _ in
+                        if let g = snap?.data() {
+                            DispatchQueue.main.async {
+                                self.caloriesGoal = g["caloriesGoal"] as? String ?? self.caloriesGoal
+                                self.proteinGoal = g["proteinGoal"] as? String ?? self.proteinGoal
+                                self.carbsGoal = g["carbsGoal"] as? String ?? self.carbsGoal
+                                self.fatGoal = g["fatGoal"] as? String ?? self.fatGoal
+                                self.waterGoal = g["waterGoal"] as? String ?? self.waterGoal
+                                self.fiberGoal = g["fiberGoal"] as? String ?? self.fiberGoal
+                            }
+                        }
+                    }
                 }
             }
         }
 
-        profileRef.document("goals").getDocument { snapshot, _ in
-            if let data = snapshot?.data() {
-                DispatchQueue.main.async {
-                    self.caloriesGoal = data["caloriesGoal"] as? String ?? self.caloriesGoal
-                    self.proteinGoal = data["proteinGoal"] as? String ?? self.proteinGoal
-                    self.carbsGoal = data["carbsGoal"] as? String ?? self.carbsGoal
-                    self.fatGoal = data["fatGoal"] as? String ?? self.fatGoal
-                    self.waterGoal = data["waterGoal"] as? String ?? self.waterGoal
-                    self.fiberGoal = data["fiberGoal"] as? String ?? self.fiberGoal
-                }
-            }
-        }
+        load(from: "athletes")
+        load(from: "coaches")
 
         resetDailyNutritionIfNeeded()
     }
@@ -261,18 +270,23 @@ class UserProfile: ObservableObject {
             "age": age
         ]
 
-        Firestore.firestore()
-            .collection("users")
-            .document(uid)
-            .collection("profile")
-            .document("info")
-            .setData(data, merge: true)
+        let rolePath = role.lowercased() == "coach" ? "coaches" : "athletes"
 
-        // Also mirror the profile identifier at the root user document
+        let parts = name.split(separator: " ", maxSplits: 1)
+        let first = String(parts.first ?? "")
+        let last = parts.count > 1 ? String(parts.last ?? "") : ""
+
+        var fullData = data
+        fullData["firstName"] = first
+        fullData["lastName"] = last
+
         Firestore.firestore()
             .collection("users")
-            .document(uid)
-            .setData(["profileId": profileId, "name": name], merge: true)
+            .document(rolePath)
+            .collection(uid)
+            .collection("profileData")
+            .document("info")
+            .setData(fullData, merge: true)
     }
 
     /// Save all nutrition goal values under `profile/goals`.
@@ -287,10 +301,12 @@ class UserProfile: ObservableObject {
             "fiberGoal": fiberGoal ?? ""
         ]
 
+        let rolePath = role.lowercased() == "coach" ? "coaches" : "athletes"
         Firestore.firestore()
             .collection("users")
-            .document(uid)
-            .collection("profile")
+            .document(rolePath)
+            .collection(uid)
+            .collection("profileData")
             .document("goals")
             .setData(data, merge: true)
     }
