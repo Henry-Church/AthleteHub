@@ -255,8 +255,8 @@ class HealthManager: ObservableObject {
 
         let rolePath = "athletes"
         let dayDoc = db.collection("users")
-            .document(rolePath)
-            .collection(userId)
+            .collection(rolePath)
+            .document(userId)
             .collection("days")
             .document(dateString)
 
@@ -420,8 +420,8 @@ dayDoc.collection("trainingMetrics")
         ]
 
         db.collection("users")
-            .document("athletes")
-            .collection(userId)
+            .collection("athletes")
+            .document(userId)
             .collection("days")
             .document(dateFormatter.string(from: date))
             .collection("recoveryMetrics")
@@ -1018,8 +1018,8 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         let newScore = TrainingScore(date: Date(), score: score)
         try? db.collection("users")
-            .document("athletes")
-            .collection(uid)
+            .collection("athletes")
+            .document(uid)
             .collection("trainingScores")
             .document(newScore.id)
             .setData(from: newScore)
@@ -1030,8 +1030,8 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
         let calendar = Calendar.current
         if let existing = trainingScores.first(where: { calendar.isDate($0.date, inSameDayAs: Date()) }) {
             try? db.collection("users")
-                .document("athletes")
-                .collection(uid)
+                .collection("athletes")
+                .document(uid)
                 .collection("trainingScores")
                 .document(existing.id)
                 .setData(["date": existing.date, "score": score], merge: true)
@@ -1047,8 +1047,8 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
         let startString = dateFormatter.string(from: startDate)
 
         db.collection("users")
-            .document("athletes")
-            .collection(uid)
+            .collection("athletes")
+            .document(uid)
             .collection("days")
             .whereField("date", isGreaterThanOrEqualTo: startString)
             .order(by: "date", descending: false)
@@ -1082,8 +1082,8 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
 
         if let uid = Auth.auth().currentUser?.uid {
             db.collection("users")
-                .document("athletes")
-                .collection(uid)
+                .collection("athletes")
+                .document(uid)
                 .collection("profileData")
                 .document("goals")
                 .setData([metric: value], merge: true)
@@ -1097,8 +1097,8 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
 
         if let uid = Auth.auth().currentUser?.uid {
             db.collection("users")
-                .document("athletes")
-                .collection(uid)
+                .collection("athletes")
+                .document(uid)
                 .collection("profileData")
                 .document("goals")
                 .getDocument { snapshot, _ in
@@ -1129,8 +1129,8 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
 
         let ref = Firestore.firestore()
             .collection("users")
-            .document("athletes")
-            .collection(userId)
+            .collection("athletes")
+            .document(userId)
             .collection("days")
             .document(todayKey)
             .collection("recoveryMetrics")

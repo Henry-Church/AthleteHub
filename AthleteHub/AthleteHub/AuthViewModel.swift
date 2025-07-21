@@ -61,15 +61,20 @@ class AuthViewModel: ObservableObject {
 
                 let db = Firestore.firestore()
                 let rolePath = role.lowercased() == "coach" ? "coaches" : "athletes"
-                let userRef = db.collection("users").document(rolePath).collection(user.uid)
+                let userRef = db.collection("users")
+                    .collection(rolePath)
+                    .document(user.uid)
                 let parts = name.split(separator: " ", maxSplits: 1)
                 let first = String(parts.first ?? "")
                 let last = parts.count > 1 ? String(parts.last ?? "") : ""
-                userRef.document("profileData").setData([
-                    "firstName": first,
-                    "lastName": last,
-                    "email": email
-                ])
+                userRef
+                    .collection("profileData")
+                    .document("info")
+                    .setData([
+                        "firstName": first,
+                        "lastName": last,
+                        "email": email
+                    ])
 
                 self.userProfile.saveToFirestore()
             }
