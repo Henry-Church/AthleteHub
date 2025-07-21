@@ -215,8 +215,7 @@ class UserProfile: ObservableObject {
 
         var loaded = false
         func load(from rolePath: String) {
-            let ref = db.collection("users")
-                .collection(rolePath)
+            let ref = db.collection(rolePath)
                 .document(self.uid)
                 .collection("profileData")
             ref.document("info").getDocument { snapshot, _ in
@@ -284,7 +283,6 @@ class UserProfile: ObservableObject {
         fullData["lastName"] = last
 
         Firestore.firestore()
-            .collection("users")
             .collection(rolePath)
             .document(uid)
             .collection("profileData")
@@ -306,7 +304,6 @@ class UserProfile: ObservableObject {
 
         let rolePath = role.lowercased() == "coach" ? "coaches" : "athletes"
         Firestore.firestore()
-            .collection("users")
             .collection(rolePath)
             .document(uid)
             .collection("profileData")
