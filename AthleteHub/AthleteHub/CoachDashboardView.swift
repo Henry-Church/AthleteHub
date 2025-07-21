@@ -132,7 +132,8 @@ struct CoachDashboardView: View {
         let today = formatter.string(from: Date())
         let db = Firestore.firestore()
         db.collection("users")
-            .document(athlete.uid)
+            .document("athletes")
+            .collection(athlete.uid)
             .collection("days")
             .document(today)
             .getDocument { snapshot, _ in
@@ -154,7 +155,7 @@ struct CoachDashboardView: View {
             searchResults = []
             return
         }
-        db.collectionGroup("profile")
+        db.collectionGroup("profileData")
             .whereField("role", isEqualTo: "Athlete")
             .limit(to: 50)
             .getDocuments { snapshot, _ in
@@ -182,7 +183,7 @@ struct CoachDashboardView: View {
 
     private func fetchSuggestedAthletes() {
         let db = Firestore.firestore()
-        db.collectionGroup("profile")
+        db.collectionGroup("profileData")
             .whereField("role", isEqualTo: "Athlete")
             .limit(to: 20)
             .getDocuments { snapshot, _ in
