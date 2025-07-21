@@ -132,8 +132,8 @@ struct CoachDashboardView: View {
         let today = formatter.string(from: Date())
         let db = Firestore.firestore()
         db.collection("users")
-            .document("athletes")
-            .collection(athlete.uid)
+            .collection("athletes")
+            .document(athlete.uid)
             .collection("days")
             .document(today)
             .getDocument { snapshot, _ in

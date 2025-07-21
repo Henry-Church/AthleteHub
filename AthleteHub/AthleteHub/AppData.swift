@@ -215,7 +215,10 @@ class UserProfile: ObservableObject {
 
         var loaded = false
         func load(from rolePath: String) {
-            let ref = db.collection("users").document(rolePath).collection(self.uid).collection("profileData")
+            let ref = db.collection("users")
+                .collection(rolePath)
+                .document(self.uid)
+                .collection("profileData")
             ref.document("info").getDocument { snapshot, _ in
                 if let data = snapshot?.data(), !loaded {
                     DispatchQueue.main.async {
@@ -282,8 +285,8 @@ class UserProfile: ObservableObject {
 
         Firestore.firestore()
             .collection("users")
-            .document(rolePath)
-            .collection(uid)
+            .collection(rolePath)
+            .document(uid)
             .collection("profileData")
             .document("info")
             .setData(fullData, merge: true)
@@ -304,8 +307,8 @@ class UserProfile: ObservableObject {
         let rolePath = role.lowercased() == "coach" ? "coaches" : "athletes"
         Firestore.firestore()
             .collection("users")
-            .document(rolePath)
-            .collection(uid)
+            .collection(rolePath)
+            .document(uid)
             .collection("profileData")
             .document("goals")
             .setData(data, merge: true)
