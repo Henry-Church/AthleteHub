@@ -131,7 +131,9 @@ struct CoachDashboardView: View {
         formatter.dateFormat = "yyyy-MM-dd"
         let today = formatter.string(from: Date())
         let db = Firestore.firestore()
-        db.collection("athletes")
+        db.collection("users")
+            .document("roles")
+            .collection("athletes")
             .document(athlete.uid)
             .collection("days")
             .document(today)
@@ -154,8 +156,9 @@ struct CoachDashboardView: View {
             searchResults = []
             return
         }
-        db.collectionGroup("profileData")
-            .whereField("role", isEqualTo: "Athlete")
+        db.collection("users")
+            .document("roles")
+            .collection("athletes")
             .limit(to: 50)
             .getDocuments { snapshot, _ in
                 if let docs = snapshot?.documents {
@@ -167,7 +170,7 @@ struct CoachDashboardView: View {
                         searchResults = filtered.map {
                             AthleteRef(
                                 id: $0.data()["profileId"] as? String ?? "",
-                                uid: $0.reference.parent.parent?.documentID ?? "",
+                                uid: $0.documentID,
                                 name: $0.data()["name"] as? String ?? "Athlete"
                             )
                         }
@@ -182,8 +185,9 @@ struct CoachDashboardView: View {
 
     private func fetchSuggestedAthletes() {
         let db = Firestore.firestore()
-        db.collectionGroup("profileData")
-            .whereField("role", isEqualTo: "Athlete")
+        db.collection("users")
+            .document("roles")
+            .collection("athletes")
             .limit(to: 20)
             .getDocuments { snapshot, _ in
                 if let docs = snapshot?.documents {
@@ -195,7 +199,7 @@ struct CoachDashboardView: View {
                     suggestedAthletes = sorted.prefix(5).map {
                         AthleteRef(
                             id: $0.data()["profileId"] as? String ?? "",
-                            uid: $0.reference.parent.parent?.documentID ?? "",
+                            uid: $0.documentID,
                             name: $0.data()["name"] as? String ?? "Athlete"
                         )
                     }
@@ -207,7 +211,9 @@ struct CoachDashboardView: View {
         let db = Firestore.firestore()
         let coachId = authViewModel.userProfile.uid
         guard !coachId.isEmpty else { return }
-        db.collection("coaches").document(coachId)
+        db.collection("users")
+            .document("roles")
+            .collection("coaches").document(coachId)
             .collection("athletes").document(athlete.id)
             .setData([
                 "name": athlete.name,

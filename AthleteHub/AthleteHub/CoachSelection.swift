@@ -11,6 +11,8 @@ class CoachSelection: ObservableObject {
     func loadAthletes(for coachId: String) {
         guard !coachId.isEmpty else { return }
         Firestore.firestore()
+            .collection("users")
+            .document("roles")
             .collection("coaches").document(coachId)
             .collection("athletes")
             .getDocuments { snapshot, _ in
