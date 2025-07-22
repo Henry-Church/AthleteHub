@@ -28,9 +28,15 @@ struct NutritionView: View {
     @State private var activeMetric: MetricType?
 
     private func applyTrainingWaterAdjustment() {
-        let scheduled = scheduleManager.trainings.filter { Calendar.current.isDateInToday($0.date) }.count
-                let completed = healthManager.recentWorkouts.filter { Calendar.current.isDateInToday($0.startDate) }.count
-                userProfile.adjustWaterGoal(forTrainingCount: scheduled + completed)
+        let scheduled = scheduleManager.trainings.filter {
+            Calendar.current.isDateInToday($0.date)
+        }.count
+        let completed = healthManager.recentWorkouts.filter {
+            Calendar.current.isDateInToday($0.startDate)
+        }.count
+
+        userProfile.adjustWaterGoal(forTrainingCount: scheduled + completed)
+        userProfile.electrolytePacketsNeeded = completed
     }
 
     private func percentage(from text: String?) -> Double? {
@@ -178,6 +184,7 @@ struct NutritionView: View {
                     intake:      String(format: "%.1f", intakeValue(healthManager.waterIntake, fallback: userProfile.waterIntake)),
                     goal:        userProfile.waterGoal    ?? "0",
                     percentage:  percent(intake: intakeValue(healthManager.waterIntake, fallback: userProfile.waterIntake), goal: userProfile.waterGoal),
+                    electrolytePackets: userProfile.electrolytePacketsNeeded,
                     colorScheme: colorScheme
                 ) {
                     activeMetric = .water
@@ -336,6 +343,7 @@ struct NutritionRingCard: View {
         let intake: String     // e.g. "1.2"
         let goal: String       // e.g. "2.0"
         let percentage: String // e.g. "60%"
+        let electrolytePackets: Int
         let colorScheme: ColorScheme
         var onTap: () -> Void = {}
         
@@ -403,6 +411,9 @@ struct NutritionRingCard: View {
                 Text(String(format: "%.1f L remaining", remaining))
                     .font(.caption2)
                     .foregroundColor(ringColor)
+                Text("\(electrolytePackets) electrolyte packet\(electrolytePackets == 1 ? "" : "s") needed")
+                    .font(.caption2)
+                    .foregroundColor(.orange)
             }
             .padding()
             .frame(maxWidth: .infinity, minHeight: 180)
@@ -716,7 +727,7 @@ struct NutritionRingCard: View {
                     let goal = Double(userProfile.waterGoal ?? "0") ?? 1
                     return "\(Int((intake / goal) * 100))%"
                 }()
-                return AnyView(WaterIntakeCard(intake: String(format: "%.1f", intake), goal: userProfile.waterGoal ?? "0 L", percentage: pct, colorScheme: colorScheme))
+                return AnyView(WaterIntakeCard(intake: String(format: "%.1f", intake), goal: userProfile.waterGoal ?? "0 L", percentage: pct, electrolytePackets: userProfile.electrolytePacketsNeeded, colorScheme: colorScheme))
             }
         }
 
