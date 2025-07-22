@@ -28,8 +28,9 @@ struct NutritionView: View {
     @State private var activeMetric: MetricType?
 
     private func applyTrainingWaterAdjustment() {
-        let count = scheduleManager.trainings.filter { Calendar.current.isDateInToday($0.date) }.count
-        userProfile.adjustWaterGoal(forTrainingCount: count)
+        let scheduled = scheduleManager.trainings.filter { Calendar.current.isDateInToday($0.date) }.count
+                let completed = healthManager.recentWorkouts.filter { Calendar.current.isDateInToday($0.startDate) }.count
+                userProfile.adjustWaterGoal(forTrainingCount: scheduled + completed)
     }
 
     private func percentage(from text: String?) -> Double? {
@@ -202,7 +203,10 @@ struct NutritionView: View {
             }
             .background(Color(UIColor.systemBackground).edgesIgnoringSafeArea(.all))
             .sheet(isPresented: $showingSetGoals) {
-                SetNutritionGoalsView().environmentObject(userProfile)
+                SetNutritionGoalsView()
+                    .environmentObject(userProfile)
+                    .environmentObject(scheduleManager)
+                    .environmentObject(healthManager)
             }
             .sheet(isPresented: $showingManualEntry) {
                 ManualNutritionEntryView()
@@ -221,6 +225,9 @@ struct NutritionView: View {
             .onReceive(scheduleManager.$trainings) { _ in
                 applyTrainingWaterAdjustment()
             }
+            .onReceive(healthManager.$recentWorkouts) { _ in
+                           applyTrainingWaterAdjustment()
+                       }
         }
     }
     
@@ -757,8 +764,10 @@ struct NutritionRingCard: View {
     
     // MARK: - SetNutritionGoalsView
     
-    struct SetNutritionGoalsView: View {
+struct SetNutritionGoalsView: View {
         @EnvironmentObject var userProfile: UserProfile
+        @EnvironmentObject var scheduleManager: TrainingScheduleManager
+        @EnvironmentObject var healthManager: HealthManager
         @Environment(\.presentationMode) var presentationMode
         
         @State private var calorieGoal: String = ""
@@ -787,6 +796,16 @@ struct NutritionRingCard: View {
                     userProfile.carbsGoal = carbGoal
                     userProfile.fatGoal = fatGoal
                     userProfile.updateWaterGoal(waterGoal)
+                    // Immediately adjust for today's trainings including
+                    // completed workouts so the displayed goal reflects
+                    // today's activity volume.
+                    let scheduled = scheduleManager.trainings.filter {
+                        Calendar.current.isDateInToday($0.date)
+                    }.count
+                    let completed = healthManager.recentWorkouts.filter {
+                        Calendar.current.isDateInToday($0.startDate)
+                    }.count
+                    userProfile.adjustWaterGoal(forTrainingCount: scheduled + completed)
                     userProfile.fiberGoal = fiberGoal
                     userProfile.saveGoalsToFirestore()
                     presentationMode.wrappedValue.dismiss()
