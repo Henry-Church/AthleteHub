@@ -557,6 +557,7 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
         let km = meters / 1000
 
         DispatchQueue.main.async {
+            self.distance = km
             completion(km)
         }
     }
