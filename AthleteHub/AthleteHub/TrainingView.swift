@@ -88,9 +88,9 @@ struct TrainingView: View {
                     )
 
                     TrainingMetricCard(
-                        title: "Distance (km)",
+                        title: "Weekly Distance (km)",
                         icon: "figure.walk",
-                        current: healthManager.distance ?? 0,
+                        current: healthManager.weeklyDistance ?? 0,
                         goal: healthManager.dailyGoals["Distance"] ?? 0,
                         colorScheme: colorScheme,
                         shadowColor: customYellow
