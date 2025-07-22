@@ -393,10 +393,10 @@ struct WaterIntakeCard: View {
                     Label("Water", systemImage: "drop.fill")
                         .font(.headline)
                     Spacer()
-                    Image(systemName: "rosette")
                 }
 
-                HStack(alignment: .top) {
+                HStack {
+                    Spacer()
                     ZStack {
                         Circle()
                             .stroke(Color.gray.opacity(0.2), lineWidth: 10)
@@ -421,10 +421,7 @@ struct WaterIntakeCard: View {
                                 .foregroundColor(.secondary)
                         }
                     }
-
                     Spacer()
-
-                    QualityBadge(status: qualityStatus, color: qualityColor)
                 }
 
                 HStack {
@@ -447,6 +444,10 @@ struct WaterIntakeCard: View {
                         : Color(.systemBackground))
             .cornerRadius(16)
             .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
+            .overlay(alignment: .topTrailing) {
+                QualityBadge(status: qualityStatus, color: qualityColor)
+                    .padding(8)
+            }
             .onAppear { animateProgress() }
             .onChange(of: progress) { _ in animateProgress() }
             .onTapGesture { onTap() }
