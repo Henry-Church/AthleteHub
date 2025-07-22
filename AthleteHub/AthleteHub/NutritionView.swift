@@ -21,10 +21,16 @@ struct NutritionView: View {
     @EnvironmentObject var userProfile: UserProfile
     @EnvironmentObject var healthManager: HealthManager
     @EnvironmentObject var coachSelection: CoachSelection
+    @EnvironmentObject var scheduleManager: TrainingScheduleManager
     
     @State private var showingSetGoals = false
     @State private var showingManualEntry = false
     @State private var activeMetric: MetricType?
+
+    private func applyTrainingWaterAdjustment() {
+        let count = scheduleManager.trainings.filter { Calendar.current.isDateInToday($0.date) }.count
+        userProfile.adjustWaterGoal(forTrainingCount: count)
+    }
 
     private func percentage(from text: String?) -> Double? {
         guard let stripped = text?.replacingOccurrences(of: "%", with: ""),
@@ -210,6 +216,10 @@ struct NutritionView: View {
             }
             .onAppear {
                 userProfile.resetDailyNutritionIfNeeded()
+                applyTrainingWaterAdjustment()
+            }
+            .onReceive(scheduleManager.$trainings) { _ in
+                applyTrainingWaterAdjustment()
             }
         }
     }
@@ -776,7 +786,7 @@ struct NutritionRingCard: View {
                     userProfile.proteinGoal = proteinGoal
                     userProfile.carbsGoal = carbGoal
                     userProfile.fatGoal = fatGoal
-                    userProfile.waterGoal = waterGoal
+                    userProfile.updateWaterGoal(waterGoal)
                     userProfile.fiberGoal = fiberGoal
                     userProfile.saveGoalsToFirestore()
                     presentationMode.wrappedValue.dismiss()
