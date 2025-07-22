@@ -215,14 +215,16 @@ class UserProfile: ObservableObject {
 
         var loaded = false
         func load(from rolePath: String) {
-            let ref = db.collection(rolePath)
+            let ref = db.collection("users")
+                .document("roles")
+                .collection(rolePath)
                 .document(self.uid)
-                .collection("profileData")
-            ref.document("info").getDocument { snapshot, _ in
+            ref.getDocument { snapshot, _ in
                 if let data = snapshot?.data(), !loaded {
                     DispatchQueue.main.async {
-                        let first = data["firstName"] as? String ?? ""
-                        let last = data["lastName"] as? String ?? ""
+                        let profile = data["profileData"] as? [String: Any] ?? [:]
+                        let first = profile["firstName"] as? String ?? ""
+                        let last = profile["lastName"] as? String ?? ""
                         let combined = "\(first) \(last)".trimmingCharacters(in: .whitespaces)
                         self.name = combined.isEmpty ? (data["name"] as? String ?? self.name) : combined
                         self.profileId = data["profileId"] as? String ?? self.name
@@ -235,7 +237,7 @@ class UserProfile: ObservableObject {
                         self.age = data["age"] as? Int ?? self.age
                     }
                     loaded = true
-                    ref.document("goals").getDocument { snap, _ in
+                    ref.collection("goals").document("data").getDocument { snap, _ in
                         if let g = snap?.data() {
                             DispatchQueue.main.async {
                                 self.caloriesGoal = g["caloriesGoal"] as? String ?? self.caloriesGoal
@@ -279,14 +281,17 @@ class UserProfile: ObservableObject {
         let last = parts.count > 1 ? String(parts.last ?? "") : ""
 
         var fullData = data
-        fullData["firstName"] = first
-        fullData["lastName"] = last
+        fullData["profileData"] = [
+            "firstName": first,
+            "lastName": last,
+            "email": email
+        ]
 
         Firestore.firestore()
+            .collection("users")
+            .document("roles")
             .collection(rolePath)
             .document(uid)
-            .collection("profileData")
-            .document("info")
             .setData(fullData, merge: true)
     }
 
@@ -304,10 +309,12 @@ class UserProfile: ObservableObject {
 
         let rolePath = role.lowercased() == "coach" ? "coaches" : "athletes"
         Firestore.firestore()
+            .collection("users")
+            .document("roles")
             .collection(rolePath)
             .document(uid)
-            .collection("profileData")
-            .document("goals")
+            .collection("goals")
+            .document("data")
             .setData(data, merge: true)
     }
 }

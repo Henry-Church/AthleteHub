@@ -253,8 +253,9 @@ class HealthManager: ObservableObject {
         let recovery = calculateOverallRecoveryScore()
         let trainingScore = calculateOverallTrainingScore()
 
-        let rolePath = "athletes"
-        let dayDoc = db.collection(rolePath)
+        let dayDoc = db.collection("users")
+            .document("roles")
+            .collection("athletes")
             .document(userId)
             .collection("days")
             .document(dateString)
@@ -272,7 +273,7 @@ class HealthManager: ObservableObject {
             }
         }
 
-       let trainingMetrics: [String: Any] = [
+        let trainingMetrics: [String: Any] = [
             "activeCalories": activeCalories ?? 0,
             "totalCalories": totalCalories ?? 0,
             "exerciseMinutes": exerciseMinutes ?? 0,
@@ -284,11 +285,7 @@ class HealthManager: ObservableObject {
             "weeklyDistance": weeklyDistance ?? 0,
             "weeklyHours": weeklyHours ?? 0
         ]
-
-// Save metrics to the day's document
-dayDoc.collection("trainingMetrics")
-    .document("metrics")
-    .setData(trainingMetrics, merge: true)
+        dayDoc.setData(["trainingMetrics": trainingMetrics], merge: true)
 
 
         let recoveryMetrics: [String: Any] = [
@@ -303,8 +300,7 @@ dayDoc.collection("trainingMetrics")
             "bloodOxygenWeek": bloodOxygenWeek
         ]
 
-        dayDoc.collection("recoveryMetrics").document("metrics")
-            .setData(recoveryMetrics, merge: true)
+        dayDoc.setData(["recoveryMetrics": recoveryMetrics], merge: true)
 
         let nutritionMetrics: [String: Any] = [
             "waterIntake": waterIntake ?? 0,
@@ -315,8 +311,7 @@ dayDoc.collection("trainingMetrics")
             "fiberIntake": fiberIntake ?? 0
         ]
 
-        dayDoc.collection("nutritionMetrics").document("metrics")
-            .setData(nutritionMetrics, merge: true)
+        dayDoc.setData(["nutritionMetrics": nutritionMetrics], merge: true)
     }
     
     
@@ -418,13 +413,13 @@ dayDoc.collection("trainingMetrics")
             "timestamp": Timestamp(date: date)
         ]
 
-        db.collection("athletes")
+        db.collection("users")
+            .document("roles")
+            .collection("athletes")
             .document(userId)
             .collection("days")
             .document(dateFormatter.string(from: date))
-            .collection("recoveryMetrics")
-            .document("metrics")
-            .setData(recoveryData, merge: true)
+            .setData(["recoveryMetrics": recoveryData], merge: true)
 
         // also update aggregated daily metrics
         saveDailyMetricsToFirestore(userId: userId)
@@ -1015,7 +1010,9 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
     func addTrainingScore(_ score: Int) {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         let newScore = TrainingScore(date: Date(), score: score)
-        try? db.collection("athletes")
+        try? db.collection("users")
+            .document("roles")
+            .collection("athletes")
             .document(uid)
             .collection("trainingScores")
             .document(newScore.id)
@@ -1026,7 +1023,9 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         let calendar = Calendar.current
         if let existing = trainingScores.first(where: { calendar.isDate($0.date, inSameDayAs: Date()) }) {
-            try? db.collection("athletes")
+            try? db.collection("users")
+                .document("roles")
+                .collection("athletes")
                 .document(uid)
                 .collection("trainingScores")
                 .document(existing.id)
@@ -1042,7 +1041,9 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
         let startDate = Calendar.current.date(byAdding: .day, value: -6, to: Date()) ?? Date()
         let startString = dateFormatter.string(from: startDate)
 
-        db.collection("athletes")
+        db.collection("users")
+            .document("roles")
+            .collection("athletes")
             .document(uid)
             .collection("days")
             .whereField("date", isGreaterThanOrEqualTo: startString)
@@ -1076,10 +1077,12 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
         UserDefaults.standard.set(dailyGoals, forKey: "dailyGoals")
 
         if let uid = Auth.auth().currentUser?.uid {
-            db.collection("athletes")
+            db.collection("users")
+                .document("roles")
+                .collection("athletes")
                 .document(uid)
-                .collection("profileData")
-                .document("goals")
+                .collection("goals")
+                .document("data")
                 .setData([metric: value], merge: true)
         }
     }
@@ -1090,10 +1093,12 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
         }
 
         if let uid = Auth.auth().currentUser?.uid {
-            db.collection("athletes")
+            db.collection("users")
+                .document("roles")
+                .collection("athletes")
                 .document(uid)
-                .collection("profileData")
-                .document("goals")
+                .collection("goals")
+                .document("data")
                 .getDocument { snapshot, _ in
                     if let data = snapshot?.data() as? [String: Double] {
                         DispatchQueue.main.async {
@@ -1121,20 +1126,19 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
         let todayKey = dateFormatter.string(from: Date())
 
         let ref = Firestore.firestore()
+            .collection("users")
+            .document("roles")
             .collection("athletes")
             .document(userId)
             .collection("days")
             .document(todayKey)
-            .collection("recoveryMetrics")
-            .document("metrics")
 
         let data: [String: Any] = [
             "sleepDuration": duration,
             "sleepQuality": quality,
             "sleepStages": stages
         ]
-
-        ref.setData(["sleep": data], merge: true)
+        ref.setData(["recoveryMetrics": ["sleep": data]], merge: true)
     }
 
 }
