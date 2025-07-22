@@ -488,18 +488,25 @@ class HealthManager: ObservableObject {
     }
 
     func fetchWeeklyDistance(completion: @escaping (Double?) -> Void) {
-        guard let type = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning) else { return completion(nil) }
+        let workoutType = HKObjectType.workoutType()
         let startOfWeek = Calendar.current.date(from: Calendar.current.dateComponents([.yearForWeekOfYear, .weekOfYear], from: Date())) ?? Date()
         let predicate = HKQuery.predicateForSamples(withStart: startOfWeek, end: Date(), options: .strictStartDate)
 
-        let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, _ in
-            let value = result?.sumQuantity()?.doubleValue(for: .meter()) ?? 0
-            let km = value / 1000
+        let query = HKSampleQuery(sampleType: workoutType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, error in
+            guard let workouts = samples as? [HKWorkout], error == nil else {
+                DispatchQueue.main.async { completion(nil) }
+                return
+            }
+
+            let meters = workouts.reduce(0.0) { $0 + ($1.totalDistance?.doubleValue(for: .meter()) ?? 0) }
+            let km = meters / 1000
+
             DispatchQueue.main.async {
                 self.weeklyDistance = km
                 completion(km)
             }
         }
+
         healthStore.execute(query)
     }
 
