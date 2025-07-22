@@ -277,6 +277,18 @@ struct NutritionRingCard: View {
         }
     }
 
+    private var statusText: String {
+        if progress >= 1 { return "Excellent" }
+        else if progress >= 0.5 { return "Almost" }
+        else { return "Poor" }
+    }
+
+    private var statusColor: Color {
+        if progress >= 1 { return .green }
+        else if progress >= 0.5 { return .yellow }
+        else { return .red }
+    }
+
     var body: some View {
         VStack(spacing: 16) {
           // Title row
@@ -284,6 +296,12 @@ struct NutritionRingCard: View {
             Label(title, systemImage: icon)
               .font(.headline)
             Spacer()
+            Text(statusText)
+              .font(.caption)
+              .fontWeight(.bold)
+              .padding(6)
+              .background(statusColor)
+              .cornerRadius(8)
           }
 
           // Ring + center text
@@ -374,15 +392,15 @@ struct WaterIntakeCard: View {
 
         private var qualityStatus: String {
             let pct = Double(percentage.replacingOccurrences(of: "%", with: "")) ?? 0
-            if pct >= 80 { return "Excellent" }
-            else if pct >= 50 { return "Moderate" }
-            else { return "Needs Work" }
+            if pct >= 100 { return "Excellent" }
+            else if pct >= 50 { return "Almost" }
+            else { return "Poor" }
         }
 
         private var qualityColor: Color {
             switch qualityStatus {
             case "Excellent": return .green
-            case "Moderate":  return .yellow
+            case "Almost":    return .yellow
             default:          return .red
             }
         }
@@ -393,6 +411,12 @@ struct WaterIntakeCard: View {
                     Label("Water", systemImage: "drop.fill")
                         .font(.headline)
                     Spacer()
+                    Text(qualityStatus)
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .padding(6)
+                        .background(qualityColor)
+                        .cornerRadius(8)
                 }
 
                 HStack {
@@ -444,33 +468,9 @@ struct WaterIntakeCard: View {
                         : Color(.systemBackground))
             .cornerRadius(16)
             .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
-            .overlay(alignment: .topTrailing) {
-                            QualityBadge(status: qualityStatus, color: qualityColor)
-                                .padding(8)
-                        }
             .onAppear { animateProgress() }
             .onChange(of: progress) { _ in animateProgress() }
             .onTapGesture { onTap() }
-        }
-    }
-
-    struct QualityBadge: View {
-        let status: String
-        let color: Color
-
-        var body: some View {
-            VStack {
-                Spacer()
-                Text(status)
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .padding(8)
-                    .frame(maxWidth: .infinity)
-                    .background(color.opacity(0.9))
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
-            }
-            .frame(width: 80, height: 80)
         }
     }
     // MARK: - NutritionChartCard
