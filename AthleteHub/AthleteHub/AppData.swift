@@ -110,6 +110,10 @@ class UserProfile: ObservableObject {
     @Published var waterGoal: String? {
         didSet { recalcWaterPercentage() }
     }
+    /// Baseline water goal set by the user. `waterGoal` may be adjusted
+    /// during the day based on scheduled trainings but this value
+    /// remains constant.
+    var baseWaterGoal: String?
     @Published var waterPercentage: String?
     @Published var waterStatus: String?
     @Published var waterDescription: String?
@@ -152,7 +156,28 @@ class UserProfile: ObservableObject {
         fiberIntake = "0"
         meals.removeAll()
 
+        // Restore the user's baseline water goal at the start of a new day
+        if let base = baseWaterGoal {
+            waterGoal = base
+        }
+
         UserDefaults.standard.set(Date(), forKey: lastResetKey)
+    }
+
+    /// Set the baseline water goal and update the current daily value.
+    /// - Parameter value: goal in liters as a string
+    func updateWaterGoal(_ value: String) {
+        baseWaterGoal = value
+        waterGoal = value
+    }
+
+    /// Adjust the day's water goal based on the number of scheduled trainings.
+    /// Each training adds 0.7L to the baseline goal.
+    /// - Parameter count: number of trainings today
+    func adjustWaterGoal(forTrainingCount count: Int) {
+        let base = Double(baseWaterGoal ?? waterGoal ?? "0") ?? 0
+        let adjusted = base + (0.7 * Double(count))
+        waterGoal = String(format: "%.1f", adjusted)
     }
     
     // MARK: - Percentage Calculations
@@ -244,7 +269,8 @@ class UserProfile: ObservableObject {
                                 self.proteinGoal = g["proteinGoal"] as? String ?? self.proteinGoal
                                 self.carbsGoal = g["carbsGoal"] as? String ?? self.carbsGoal
                                 self.fatGoal = g["fatGoal"] as? String ?? self.fatGoal
-                                self.waterGoal = g["waterGoal"] as? String ?? self.waterGoal
+                                let loadedWater = g["waterGoal"] as? String ?? self.waterGoal
+                                self.updateWaterGoal(loadedWater ?? "")
                                 self.fiberGoal = g["fiberGoal"] as? String ?? self.fiberGoal
                             }
                         }
