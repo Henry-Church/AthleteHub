@@ -123,14 +123,27 @@ class HealthManager: ObservableObject {
         let sleepQuality = Double(sleepQualityScore ?? 0)
         let sleepDurationScore = sleepGoal > 0 ? min((sleepDuration ?? 0) / sleepGoal, 1) * 100 : 0
         let hrvScore = hrvGoal > 0 ? min((hrv ?? 0) / hrvGoal, 1) * 100 : 0
+
         var restingScore: Double = 0
-        if restingGoal > 0 {
-            let ratio = (restingHeartRate ?? restingGoal) / restingGoal
+        if restingGoal > 0, let resting = restingHeartRate {
+            let ratio = resting / restingGoal
             restingScore = max(0, min(2 - ratio, 1)) * 100
         }
-        let stressScore = max(0, 1 - ((stressLevel ?? 0) / 30)) * 100
+
+        let stressScore: Double
+        if let stress = stressLevel {
+            stressScore = max(0, 1 - (stress / 30)) * 100
+        } else {
+            stressScore = 0
+        }
 
         let scores = [sleepQuality, sleepDurationScore, hrvScore, restingScore, stressScore]
+
+        guard scores.contains(where: { $0 > 0 }) else {
+            recoveryScore = 0
+            return 0
+        }
+
         let overall = scores.reduce(0, +) / Double(scores.count)
         recoveryScore = overall
         return overall
