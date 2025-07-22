@@ -269,7 +269,6 @@ class HealthManager: ObservableObject {
                 print("❌ Error saving day summary: \(error.localizedDescription)")
             } else {
                 print("✅ Saved summary for \(dateString)")
-                self.updateDailyTrainingScore(Int(trainingScore))
             }
         }
 
@@ -1007,33 +1006,6 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
         }
     }
 
-    func addTrainingScore(_ score: Int) {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        let newScore = TrainingScore(date: Date(), score: score)
-        try? db.collection("users")
-            .document("roles")
-            .collection("athletes")
-            .document(uid)
-            .collection("trainingScores")
-            .document(newScore.id)
-            .setData(from: newScore)
-    }
-
-    func updateDailyTrainingScore(_ score: Int) {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        let calendar = Calendar.current
-        if let existing = trainingScores.first(where: { calendar.isDate($0.date, inSameDayAs: Date()) }) {
-            try? db.collection("users")
-                .document("roles")
-                .collection("athletes")
-                .document(uid)
-                .collection("trainingScores")
-                .document(existing.id)
-                .setData(["date": existing.date, "score": score], merge: true)
-        } else {
-            addTrainingScore(score)
-        }
-    }
 
     func fetchTrainingScores() {
         guard let uid = Auth.auth().currentUser?.uid else { return }
