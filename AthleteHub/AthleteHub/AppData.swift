@@ -127,6 +127,9 @@ class UserProfile: ObservableObject {
     @Published var fiberPercentage: String?
     @Published var fiberStatus: String?
     @Published var fiberDescription: String?
+
+    /// Number of electrolyte packets required for today's completed trainings.
+    @Published var electrolytePacketsNeeded: Int = 0
     
     @Published var macronutrientBreakdownAvailable: Bool = false
     @Published var dailyIntakeTrendsAvailable: Bool = false

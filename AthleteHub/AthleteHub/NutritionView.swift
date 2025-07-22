@@ -28,9 +28,15 @@ struct NutritionView: View {
     @State private var activeMetric: MetricType?
 
     private func applyTrainingWaterAdjustment() {
-        let scheduled = scheduleManager.trainings.filter { Calendar.current.isDateInToday($0.date) }.count
-                let completed = healthManager.recentWorkouts.filter { Calendar.current.isDateInToday($0.startDate) }.count
-                userProfile.adjustWaterGoal(forTrainingCount: scheduled + completed)
+        let scheduled = scheduleManager.trainings.filter {
+            Calendar.current.isDateInToday($0.date)
+        }.count
+        let completed = healthManager.recentWorkouts.filter {
+            Calendar.current.isDateInToday($0.startDate)
+        }.count
+
+        userProfile.adjustWaterGoal(forTrainingCount: scheduled + completed)
+        userProfile.electrolytePacketsNeeded = completed
     }
 
     private func percentage(from text: String?) -> Double? {
@@ -178,6 +184,7 @@ struct NutritionView: View {
                     intake:      String(format: "%.1f", intakeValue(healthManager.waterIntake, fallback: userProfile.waterIntake)),
                     goal:        userProfile.waterGoal    ?? "0",
                     percentage:  percent(intake: intakeValue(healthManager.waterIntake, fallback: userProfile.waterIntake), goal: userProfile.waterGoal),
+                    electrolytePackets: userProfile.electrolytePacketsNeeded,
                     colorScheme: colorScheme
                 ) {
                     activeMetric = .water
@@ -332,10 +339,11 @@ struct NutritionRingCard: View {
     
     // MARK: - WaterIntakeCard
     
-    struct WaterIntakeCard: View {
+struct WaterIntakeCard: View {
         let intake: String     // e.g. "1.2"
         let goal: String       // e.g. "2.0"
         let percentage: String // e.g. "60%"
+        let electrolytePackets: Int
         let colorScheme: ColorScheme
         var onTap: () -> Void = {}
         
@@ -363,6 +371,21 @@ struct NutritionRingCard: View {
                         animatedProgress = progress
                     }
                 }
+
+        private var qualityStatus: String {
+            let pct = Double(percentage.replacingOccurrences(of: "%", with: "")) ?? 0
+            if pct >= 80 { return "Excellent" }
+            else if pct >= 50 { return "Moderate" }
+            else { return "Needs Work" }
+        }
+
+        private var qualityColor: Color {
+            switch qualityStatus {
+            case "Excellent": return .green
+            case "Moderate":  return .yellow
+            default:          return .red
+            }
+        }
         
         var body: some View {
             VStack(spacing: 16) {
@@ -370,36 +393,49 @@ struct NutritionRingCard: View {
                     Label("Water", systemImage: "drop.fill")
                         .font(.headline)
                     Spacer()
+                    Image(systemName: "rosette")
                 }
-                
-                ZStack {
-                    Circle()
-                        .stroke(Color.gray.opacity(0.2), lineWidth: 10)
-                        .frame(width: 100, height: 100)
-                    
-                    Circle()
-                        .trim(from: 0, to: animatedProgress)
-                        .stroke(ringColor, style: StrokeStyle(lineWidth: 10, lineCap: .round))
-                        .rotationEffect(.degrees(-90))
-                        .frame(width: 100, height: 100)
-                    
-                    VStack(spacing: 2) {
-                        Text(String(format: "%.1f L", numericIntake))
-                            .font(.title2).bold()
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.5)
-                            .foregroundColor(ringColor)
-                        Text(String(format: "/ %.1f L", numericGoal))
-                            .font(.caption)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.5)
-                            .foregroundColor(.secondary)
+
+                HStack(alignment: .top) {
+                    ZStack {
+                        Circle()
+                            .stroke(Color.gray.opacity(0.2), lineWidth: 10)
+                            .frame(width: 100, height: 100)
+
+                        Circle()
+                            .trim(from: 0, to: animatedProgress)
+                            .stroke(ringColor, style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                            .rotationEffect(.degrees(-90))
+                            .frame(width: 100, height: 100)
+
+                        VStack(spacing: 2) {
+                            Text(String(format: "%.1f L", numericIntake))
+                                .font(.title2).bold()
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.5)
+                                .foregroundColor(ringColor)
+                            Text(String(format: "/ %.1f L", numericGoal))
+                                .font(.caption)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.5)
+                                .foregroundColor(.secondary)
+                        }
                     }
+
+                    Spacer()
+
+                    QualityBadge(status: qualityStatus, color: qualityColor)
                 }
-                
-                Text("\(percentage) of goal")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+
+                HStack {
+                    Text("\(percentage) of goal")
+                    Spacer()
+                    Image(systemName: "pills.fill")
+                    Text("\(electrolytePackets) packet\(electrolytePackets == 1 ? "" : "s") due today")
+                }
+                .font(.caption2)
+                .foregroundColor(.secondary)
+
                 Text(String(format: "%.1f L remaining", remaining))
                     .font(.caption2)
                     .foregroundColor(ringColor)
@@ -414,6 +450,26 @@ struct NutritionRingCard: View {
             .onAppear { animateProgress() }
             .onChange(of: progress) { _ in animateProgress() }
             .onTapGesture { onTap() }
+        }
+    }
+
+    struct QualityBadge: View {
+        let status: String
+        let color: Color
+
+        var body: some View {
+            VStack {
+                Spacer()
+                Text(status)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .padding(8)
+                    .frame(maxWidth: .infinity)
+                    .background(color.opacity(0.9))
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
+            }
+            .frame(width: 80, height: 80)
         }
     }
     // MARK: - NutritionChartCard
@@ -716,7 +772,7 @@ struct NutritionRingCard: View {
                     let goal = Double(userProfile.waterGoal ?? "0") ?? 1
                     return "\(Int((intake / goal) * 100))%"
                 }()
-                return AnyView(WaterIntakeCard(intake: String(format: "%.1f", intake), goal: userProfile.waterGoal ?? "0 L", percentage: pct, colorScheme: colorScheme))
+                return AnyView(WaterIntakeCard(intake: String(format: "%.1f", intake), goal: userProfile.waterGoal ?? "0 L", percentage: pct, electrolytePackets: userProfile.electrolytePacketsNeeded, colorScheme: colorScheme))
             }
         }
 
