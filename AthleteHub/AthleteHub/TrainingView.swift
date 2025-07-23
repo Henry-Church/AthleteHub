@@ -35,14 +35,14 @@ struct TrainingView: View {
                         Button(action: { showingSetGoals = true }) {
                             Image(systemName: "target")
                                 .padding(8)
-                                .background(Color.blue.opacity(0.2))
+                                .background(Color.yellow)
                                 .cornerRadius(8)
                         }
 
                         Button(action: { showingManualEntry = true }) {
                             Image(systemName: "square.and.pencil")
                                 .padding(8)
-                                .background(Color.green.opacity(0.2))
+                                .background(Color.yellow)
                                 .cornerRadius(8)
                         }
                     }
@@ -306,16 +306,16 @@ struct OverallTrainingScoreCard: View {
         HStack {
             Image(systemName: "figure.run")
                 .font(.largeTitle)
-                .foregroundColor(.black)
+                .foregroundColor(.white)
 
             VStack(alignment: .leading) {
                 Text("Overall Training Score")
                     .font(.headline)
-                    .foregroundColor(.black)
+                    .foregroundColor(.white)
 
                 Text("\(score)")
                     .font(.system(size: 48, weight: .bold))
-                    .foregroundColor(.black)
+                    .foregroundColor(.white)
             }
 
             Spacer()
@@ -325,12 +325,13 @@ struct OverallTrainingScoreCard: View {
                 .fontWeight(.bold)
                 .padding(8)
                 .background(statusColor)
-                .foregroundColor(.black)
+                .foregroundColor(.white)
                 .cornerRadius(12)
         }
         .padding()
         .background(Color.yellow)
         .cornerRadius(20)
+        .shadow(color: Color.yellow.opacity(0.5), radius: 8, x: 0, y: 4)
     }
 }
 

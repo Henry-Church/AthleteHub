@@ -761,22 +761,28 @@ struct SleepStageHypnogramView: View {
         }
     }
 
-    // Pre-compute sequential offsets for each valid sample so the chart spans
-    // the exact total duration of shown stages instead of the entire query range
+    // Compute offsets from the first stage start time so the timeline length
+    // matches the overall duration of the sleep session.
     private var timelineEntries: [(stage: HKCategoryValueSleepAnalysis, start: TimeInterval, duration: TimeInterval)] {
-        var offset: TimeInterval = 0
-        var result: [(HKCategoryValueSleepAnalysis, TimeInterval, TimeInterval)] = []
-        for sample in filteredSamples.sorted(by: { $0.startDate < $1.startDate }) {
-            guard let stage = HKCategoryValueSleepAnalysis(rawValue: sample.value) else { continue }
-            let duration = sample.endDate.timeIntervalSince(sample.startDate)
-            result.append((stage, offset, duration))
-            offset += duration
+        guard let firstDate = filteredSamples.map({ $0.startDate }).min() else {
+            return []
         }
-        return result
+        return filteredSamples
+            .sorted(by: { $0.startDate < $1.startDate })
+            .compactMap { sample in
+                guard let stage = HKCategoryValueSleepAnalysis(rawValue: sample.value) else { return nil }
+                let startOffset = sample.startDate.timeIntervalSince(firstDate)
+                let duration = sample.endDate.timeIntervalSince(sample.startDate)
+                return (stage, startOffset, duration)
+            }
     }
 
     private var totalDuration: TimeInterval {
-        timelineEntries.reduce(0) { $0 + $1.duration }
+        guard let firstStart = filteredSamples.map({ $0.startDate }).min(),
+              let lastEnd = filteredSamples.map({ $0.endDate }).max() else {
+            return 0
+        }
+        return lastEnd.timeIntervalSince(firstStart)
     }
 
     var body: some View {
