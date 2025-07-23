@@ -35,15 +35,15 @@ struct TrainingView: View {
                         Button(action: { showingSetGoals = true }) {
                             Image(systemName: "target")
                                 .padding(8)
-                                .background(Color.yellow)
-                                .cornerRadius(8)
+                                .background(Color.yellow.opacity(0.2))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
 
                         Button(action: { showingManualEntry = true }) {
                             Image(systemName: "square.and.pencil")
                                 .padding(8)
-                                .background(Color.yellow)
-                                .cornerRadius(8)
+                                .background(Color.yellow.opacity(0.2))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
                     }
                 }

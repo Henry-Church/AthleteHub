@@ -128,7 +128,7 @@ var body: some View {
                             Button(action: {
                                 showingManualEntry = true
                             }) {
-                                Image(systemName: "pencil")
+                                Image(systemName: "square.and.pencil")
                                     .padding(8)
                                     .background(Color.purple.opacity(0.2))
                                     .clipShape(RoundedRectangle(cornerRadius: 8))
