@@ -789,8 +789,9 @@ struct SleepStageHypnogramView: View {
                 let chartWidth = geometry.size.width - labelWidth
                 let chartHeight = geometry.size.height - timeHeight
                 let rowHeight = chartHeight / CGFloat(stageOrder.count)
-                let chartHours: Double = 9
-                let totalSeconds = chartHours * 3600
+                // Make the timeline width adapt to the total duration of the
+                // displayed sleep stages rather than a fixed 9h window.
+                let totalSeconds = max(totalDuration, 3600) // ensure at least a 1h axis
                 let hourTicks = stride(from: 0.0, through: totalSeconds, by: 3600).map { $0 }
                 let groupedByStage = Dictionary(grouping: timelineEntries, by: { $0.stage })
 

@@ -921,6 +921,7 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
 
             var totalSleep: Double = 0
             var awakeDuration: Double = 0
+            var inBedDuration: Double = 0
             var deepDuration: Double = 0
             var remDuration: Double = 0
             var lightDuration: Double = 0
@@ -928,6 +929,10 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
             var sleepStageDurations: [String: Double] = [:]
             var sleepStages: [SleepStage] = []
             
+            if let first = selectedSamples.first, let last = selectedSamples.last {
+                inBedDuration = last.endDate.timeIntervalSince(first.startDate) / 3600.0
+            }
+
             for sample in selectedSamples {
                 let duration = sample.endDate.timeIntervalSince(sample.startDate) / 3600.0
                 let stageValue = HKCategoryValueSleepAnalysis(rawValue: sample.value)
@@ -980,7 +985,8 @@ func fetchWorkoutDistance(completion: @escaping (Double?) -> Void) {
             }
 
             DispatchQueue.main.async {
-                self.sleepDuration = totalSleep
+                // Display total time in bed to better match the hypnogram width
+                self.sleepDuration = inBedDuration
                 self.sleepQuality = quality
                 self.sleepQualityScore = qualityScore
                 self.sleepStages = sleepStages
