@@ -418,9 +418,9 @@ class HealthManager: ObservableObject {
         let score = calculateOverallRecoveryScore()
         let recoveryData: [String: Any] = [
             "sleepDuration": sleepDuration,
-            "sleepScore": sleepScore,
+            "sleepQualityScore": sleepScore,
             "hrv": hrv,
-            "restingHR": restingHR,
+            "restingHeartRate": restingHR,
             "stressLevel": stressLevel,
             "recoveryScore": score,
             "timestamp": Timestamp(date: date)
