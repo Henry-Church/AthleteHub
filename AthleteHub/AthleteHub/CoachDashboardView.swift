@@ -53,6 +53,12 @@ struct CoachDashboardView: View {
     @State var showingAthleteDetail = false
 
     @Environment(\.colorScheme) var colorScheme
+
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
     
     enum DashboardView: String, CaseIterable, Hashable {
         case overview = "Overview"
@@ -117,10 +123,7 @@ struct CoachDashboardView: View {
 
     func loadMetrics(for athlete: AthleteRef) {
         let db = Firestore.firestore()
-        let today = Date()
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        let dateString = formatter.string(from: today)
+        let dateString = dateFormatter.string(from: Date())
 
         db.collection("users")
             .document("roles")
@@ -135,8 +138,7 @@ struct CoachDashboardView: View {
                     let nutrition = data["nutritionScore"] as? Int ?? 50 // Default value
                     let overall = (training + recovery + nutrition) / 3
                     
-                    // Generate mock weekly trend data
-                    let weeklyTrend = (0..<7).map { _ in Int.random(in: 40...90) }
+                    fetchWeeklyTrend(for: athlete.uid) { weeklyTrend in
                     
                     // Determine risk level based on scores
                     let riskLevel: AthleteMetrics.RiskLevel
@@ -157,10 +159,11 @@ struct CoachDashboardView: View {
                         lastWorkout: "Running - 5km",
                         riskLevel: riskLevel
                     )
-                    
+
                     DispatchQueue.main.async {
                         self.athleteMetrics[athlete.uid] = metrics
                     }
+                }
                 } else {
                     // Create default metrics for new athletes
                     let defaultMetrics = AthleteMetrics(
@@ -177,6 +180,42 @@ struct CoachDashboardView: View {
                         self.athleteMetrics[athlete.uid] = defaultMetrics
                     }
                 }
+            }
+    }
+
+    private func fetchWeeklyTrend(for uid: String, completion: @escaping ([Int]) -> Void) {
+        let startDate = Calendar.current.date(byAdding: .day, value: -6, to: Date()) ?? Date()
+        let startString = dateFormatter.string(from: startDate)
+
+        let db = Firestore.firestore()
+        db.collection("users")
+            .document("roles")
+            .collection("athletes")
+            .document(uid)
+            .collection("days")
+            .whereField("date", isGreaterThanOrEqualTo: startString)
+            .order(by: "date", descending: false)
+            .getDocuments { snapshot, _ in
+                guard let docs = snapshot?.documents else {
+                    completion(Array(repeating: 0, count: 7))
+                    return
+                }
+
+                var result = Array(repeating: 0, count: 7)
+                for doc in docs {
+                    let data = doc.data()
+                    guard let dateStr = data["date"] as? String,
+                          let date = self.dateFormatter.date(from: dateStr) else { continue }
+                    let offset = Calendar.current.dateComponents([.day], from: startDate, to: date).day ?? 0
+                    if offset >= 0 && offset < 7 {
+                        if let val = data["trainingScore"] as? Int {
+                            result[offset] = val
+                        } else if let d = data["trainingScore"] as? Double {
+                            result[offset] = Int(d)
+                        }
+                    }
+                }
+                completion(result)
             }
     }
 
