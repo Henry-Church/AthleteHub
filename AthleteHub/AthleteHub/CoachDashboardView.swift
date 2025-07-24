@@ -1,5 +1,6 @@
 import SwiftUI
 import FirebaseFirestore
+import Charts
 
 struct AthleteRef: Identifiable {
     /// Readable identifier for the athlete, typically their profile name.
@@ -9,110 +10,100 @@ struct AthleteRef: Identifiable {
     var name: String
 }
 
-/// Lightweight metrics summary for a single athlete.
+/// Comprehensive metrics summary for a single athlete.
 struct AthleteMetrics {
     var trainingScore: Int
     var recoveryScore: Int
+    var nutritionScore: Int
+    var overallScore: Int
+    var weeklyTrend: [Int]
+    var lastWorkout: String?
+    var riskLevel: RiskLevel
+    
+    enum RiskLevel {
+        case low, medium, high
+        
+        var color: Color {
+            switch self {
+            case .low: return .green
+            case .medium: return .orange
+            case .high: return .red
+            }
+        }
+        
+        var text: String {
+            switch self {
+            case .low: return "Low Risk"
+            case .medium: return "Monitor"
+            case .high: return "High Risk"
+            }
+        }
+    }
 }
 
 struct CoachDashboardView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @EnvironmentObject var coachSelection: CoachSelection
-    @State private var metrics: AthleteMetrics? = nil
+    @State var athleteMetrics: [String: AthleteMetrics] = [:]
+    @State var selectedView: DashboardView = .overview
+    @State var searchName = ""
+    @State var searchResults: [AthleteRef] = []
+    @State var suggestedAthletes: [AthleteRef] = []
+    @State var errorMessage: String?
+    @State var showingAthleteDetail = false
 
-    @State private var searchName = ""
-    @State private var searchResults: [AthleteRef] = []
-    @State private var suggestedAthletes: [AthleteRef] = []
-    @State private var errorMessage: String?
+    @Environment(\.colorScheme) var colorScheme
+    
+    enum DashboardView: String, CaseIterable, Hashable {
+        case overview = "Overview"
+        case performance = "Performance"
+        case alerts = "Alerts"
+    }
+    
+    var cardBackground: Color {
+        colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground)
+    }
 
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    if !coachSelection.athletes.isEmpty {
-                        Picker("Athlete", selection: $coachSelection.selectedIndex) {
-                            ForEach(coachSelection.athletes.indices, id: \.self) { idx in
-                                Text(coachSelection.athletes[idx].name).tag(idx)
-                            }
-                        }
-                        .pickerStyle(MenuPickerStyle())
-                        .onChange(of: coachSelection.selectedIndex) { _ in
-                            loadMetrics(for: coachSelection.athletes[coachSelection.selectedIndex])
-                        }
-                        .padding(.horizontal)
+                LazyVStack(spacing: 24) {
+                    // Header with Coach Info
+                    coachHeaderSection
+                    
+                    // Dashboard View Selector
+                    dashboardViewSelector
+                    
+                    // Main Content based on selected view
+                    switch selectedView {
+                    case .overview:
+                        overviewContent
+                    case .performance:
+                        performanceContent
+                    case .alerts:
+                        alertsContent
                     }
-
-                    if let m = metrics {
-                        HStack(spacing: 16) {
-                            MetricCard(title: "Training", value: "\(m.trainingScore)")
-                            MetricCard(title: "Recovery", value: "\(m.recoveryScore)")
-                        }
-                        .padding(.horizontal)
-
-                            destination: AthleteDetailView(athleteId: coachSelection.athletes[coachSelection.selectedIndex].uid)
-                        ) {
-                            Text("View Full Dashboard")
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.blue.opacity(0.2))
-                                .cornerRadius(8)
-                        }
-                        AthleteInfoCard(profile: coachSelection.athleteProfile)
-                        .padding(.horizontal)
-                    } else if !coachSelection.athletes.isEmpty {
-                        Text("No metrics available")
-                            .foregroundColor(.secondary)
-                            .padding(.horizontal)
-                    } else {
-                        Text("No athletes added yet")
-                            .foregroundColor(.secondary)
-                            .padding(.horizontal)
-                    }
-
-                    Divider().padding(.vertical)
-
-                    VStack(alignment: .leading, spacing: 12) {
-                        TextField("Add athlete by name", text: $searchName)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .onChange(of: searchName) { _ in searchForName() }
-
-                        if !searchResults.isEmpty {
-                            ForEach(searchResults) { result in
-                                HStack {
-                                    Text(result.name)
-                                    Spacer()
-                                    Button("Add") { addFoundAthlete(result) }
-                                }
-                            }
-                        } else if !searchName.isEmpty {
-                            Text(errorMessage ?? "No athletes found")
-                                .foregroundColor(.red)
-                        } else if !suggestedAthletes.isEmpty {
-                            Text("Suggested")
-                                .font(.headline)
-                            ForEach(suggestedAthletes) { suggestion in
-                                HStack {
-                                    Text(suggestion.name)
-                                    Spacer()
-                                    Button("Add") { addFoundAthlete(suggestion) }
-                                }
-                            }
-                        }
-                    }
-                    .padding(.horizontal)
+                    
+                    // Add Athlete Section
+                    addAthleteSection
                 }
-                .onAppear {
-                    loadAthletes()
-                    fetchSuggestedAthletes()
-                }
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
             }
+            .background(colorScheme == .dark ? Color.black : Color(.systemGroupedBackground))
             .navigationTitle("Coach Dashboard")
+            .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { authViewModel.signOut() }) {
-                        Text("Sign Out")
+                        Image(systemName: "rectangle.portrait.and.arrow.right")
                     }
                 }
+            }
+            .onAppear {
+                loadAthletes()
+                fetchSuggestedAthletes()
+                loadAllAthleteMetrics()
             }
         }
     }
@@ -121,35 +112,76 @@ struct CoachDashboardView: View {
     private func loadAthletes() {
         let coachId = authViewModel.userProfile.uid
         coachSelection.loadAthletes(for: coachId)
-        if !coachSelection.athletes.isEmpty {
-            loadMetrics(for: coachSelection.athletes[coachSelection.selectedIndex])
-        }
+        loadAllAthleteMetrics()
     }
 
-    private func loadMetrics(for athlete: AthleteRef) {
+    func loadMetrics(for athlete: AthleteRef) {
+        let db = Firestore.firestore()
+        let today = Date()
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
-        let today = formatter.string(from: Date())
-        let db = Firestore.firestore()
+        let dateString = formatter.string(from: today)
+
         db.collection("users")
             .document("roles")
             .collection("athletes")
             .document(athlete.uid)
             .collection("days")
-            .document(today)
+            .document(dateString)
             .getDocument { snapshot, _ in
                 if let data = snapshot?.data() {
-                    let training = (data["trainingScore"] as? Int) ?? Int((data["trainingScore"] as? Double) ?? 0)
-                    let recovery = (data["recoveryScore"] as? Int) ?? Int((data["recoveryScore"] as? Double) ?? 0)
-                    metrics = AthleteMetrics(trainingScore: training, recoveryScore: recovery)
+                    let training = data["trainingScore"] as? Int ?? 0
+                    let recovery = data["recoveryScore"] as? Int ?? 0
+                    let nutrition = data["nutritionScore"] as? Int ?? 50 // Default value
+                    let overall = (training + recovery + nutrition) / 3
+                    
+                    // Generate mock weekly trend data
+                    let weeklyTrend = (0..<7).map { _ in Int.random(in: 40...90) }
+                    
+                    // Determine risk level based on scores
+                    let riskLevel: AthleteMetrics.RiskLevel
+                    if overall >= 70 && recovery >= 60 {
+                        riskLevel = .low
+                    } else if overall >= 50 || recovery >= 40 {
+                        riskLevel = .medium
+                    } else {
+                        riskLevel = .high
+                    }
+                    
+                    let metrics = AthleteMetrics(
+                        trainingScore: training,
+                        recoveryScore: recovery,
+                        nutritionScore: nutrition,
+                        overallScore: overall,
+                        weeklyTrend: weeklyTrend,
+                        lastWorkout: "Running - 5km",
+                        riskLevel: riskLevel
+                    )
+                    
+                    DispatchQueue.main.async {
+                        self.athleteMetrics[athlete.uid] = metrics
+                    }
                 } else {
-                    metrics = nil
+                    // Create default metrics for new athletes
+                    let defaultMetrics = AthleteMetrics(
+                        trainingScore: 0,
+                        recoveryScore: 0,
+                        nutritionScore: 0,
+                        overallScore: 0,
+                        weeklyTrend: Array(repeating: 0, count: 7),
+                        lastWorkout: nil,
+                        riskLevel: .medium
+                    )
+                    
+                    DispatchQueue.main.async {
+                        self.athleteMetrics[athlete.uid] = defaultMetrics
+                    }
                 }
             }
     }
 
     // MARK: - Athlete Search & Add
-    private func searchForName() {
+     func searchForName() {
         let db = Firestore.firestore()
         let trimmed = searchName.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else {
@@ -207,7 +239,7 @@ struct CoachDashboardView: View {
             }
     }
 
-    private func addFoundAthlete(_ athlete: AthleteRef) {
+    func addFoundAthlete(_ athlete: AthleteRef) {
         let db = Firestore.firestore()
         let coachId = authViewModel.userProfile.uid
         guard !coachId.isEmpty else { return }
@@ -226,76 +258,47 @@ struct CoachDashboardView: View {
     }
 }
 
-// Simple visual card used for metric display
-struct MetricCard: View {
-    let title: String
-    let value: String
-
-    var body: some View {
-        VStack {
-            Text(value)
-                .font(.title2)
-                .fontWeight(.bold)
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(Color(.secondarySystemBackground))
-struct AthleteInfoCard: View {
-    let profile: UserProfile
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(profile.name).font(.headline)
-            HStack {
-                Text("Age: (profile.age)")
-                Spacer()
-                Text(String(format: "BMI: %.1f", profile.bmi))
-            }
-            .font(.caption)
-        }
-        .padding()
-        .frame(maxWidth: .infinity)
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
-    }
-}
-
-        .cornerRadius(12)
-    }
-}
-
 struct AthleteDetailView: View {
     let athleteId: String
     @StateObject private var profile = UserProfile()
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        TabView {
-            DashboardView()
-                .tabItem {
-                    Image(systemName: "house.fill")
-                    Text("Dashboard")
-                }
+        NavigationView {
+            TabView {
+                DashboardView()
+                    .tabItem {
+                        Image(systemName: "house.fill")
+                        Text("Dashboard")
+                    }
 
-            TrainingView()
-                .tabItem {
-                    Image(systemName: "figure.walk")
-                    Text("Training")
-                }
+                TrainingView()
+                    .tabItem {
+                        Image(systemName: "figure.walk")
+                        Text("Training")
+                    }
 
-            NutritionView()
-                .tabItem {
-                    Image(systemName: "fork.knife")
-                    Text("Nutrition")
-                }
+                NutritionView()
+                    .tabItem {
+                        Image(systemName: "fork.knife")
+                        Text("Nutrition")
+                    }
 
-            RecoveryView()
-                .tabItem {
-                    Image(systemName: "bed.double")
-                    Text("Recovery")
+                RecoveryView()
+                    .tabItem {
+                        Image(systemName: "bed.double")
+                        Text("Recovery")
+                    }
+            }
+            .navigationTitle(profile.name)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
                 }
+            }
         }
         .environmentObject(profile)
         .onAppear {
